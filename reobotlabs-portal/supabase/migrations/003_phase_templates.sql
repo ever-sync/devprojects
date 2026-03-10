@@ -1,0 +1,12 @@
+-- ============================================================
+-- 003_phase_templates.sql
+-- Os templates de fases são gerenciados pela aplicação em:
+--   src/lib/constants.ts → PHASE_TEMPLATES
+--   src/actions/projects.ts → createProject()
+--
+-- Ao criar um projeto via interface, as fases são inseridas
+-- automaticamente na tabela project_phases com base no tipo
+-- do projeto (saas, automation, ai_agent).
+--
+-- Nenhuma migration SQL é necessária para este passo.
+-- ============================================================
