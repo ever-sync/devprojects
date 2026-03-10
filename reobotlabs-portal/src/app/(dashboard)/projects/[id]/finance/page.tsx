@@ -30,7 +30,7 @@ export default async function ProjectFinancePage({ params }: Props) {
   if (!isAdmin) redirect(`/projects/${id}`)
   const { data: financeAuditLogs } = await supabase
     .from('audit_logs')
-    .select('id, action, metadata, created_at, actor:profiles!audit_logs_actor_user_id_fkey(full_name)')
+    .select('id, workspace_id, actor_user_id, entity_type, entity_id, action, metadata, created_at, actor:profiles!audit_logs_actor_user_id_fkey(full_name)')
     .eq('workspace_id', project.workspace_id)
     .ilike('action', 'finance.%')
     .order('created_at', { ascending: false })
