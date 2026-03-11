@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npx next build:*)",
+      "Bash(head:*)",
+      "Bash(node -e:*)",
+      "Bash(npm install:*)",
+      "Bash(\"c:/Users/rapha/OneDrive/Documentos/ReobotLabs/reobotlabs-portal/src/app/\\(dashboard\\)/dashboard/loading.tsx\")"
+    ]
+  }
+}
