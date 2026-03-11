@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { notifyMeetingInvitees } from '@/lib/notification-events'
 
 export type MeetingInvitee = {
   id: string | null
@@ -53,6 +54,22 @@ export async function createMeeting(data: {
     .single()
 
   if (error) return { error: error.message }
+
+  await notifyMeetingInvitees({
+    meetingId: meeting.id,
+    projectId: data.projectId,
+    title: data.title,
+    scheduledDate: data.scheduledDate,
+    scheduledTime: data.scheduledTime,
+    locationType: data.locationType,
+    locationUrl: data.locationUrl,
+    locationAddress: data.locationAddress,
+    invitees: data.invitees.map((invitee) => ({
+      userId: invitee.id,
+      email: invitee.email,
+      fullName: invitee.name,
+    })),
+  })
 
   revalidatePath('/dashboard')
   return { success: true, meetingId: meeting.id }

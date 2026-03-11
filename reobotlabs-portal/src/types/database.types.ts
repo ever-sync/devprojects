@@ -179,6 +179,9 @@ export type Database = {
           name: string
           slug: string
           owner_user_id: string | null
+          n8n_webhook_enabled: boolean
+          n8n_webhook_secret: string | null
+          n8n_webhook_url: string | null
           created_at: string
           updated_at: string
         }
@@ -187,6 +190,9 @@ export type Database = {
           name: string
           slug: string
           owner_user_id?: string | null
+          n8n_webhook_enabled?: boolean
+          n8n_webhook_secret?: string | null
+          n8n_webhook_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -194,6 +200,9 @@ export type Database = {
           name?: string
           slug?: string
           owner_user_id?: string | null
+          n8n_webhook_enabled?: boolean
+          n8n_webhook_secret?: string | null
+          n8n_webhook_url?: string | null
           updated_at?: string
         }
         Relationships: [

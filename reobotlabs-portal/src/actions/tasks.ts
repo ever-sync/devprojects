@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { taskSchema, type TaskInput } from '@/lib/validations'
 import { triggerN8nEvent } from '@/lib/n8n'
+import { getProfilesByIds, notifyClientPendingTask, notifyTaskStakeholders } from '@/lib/notification-events'
 import type { TaskStatus } from '@/types'
 
 function buildTaskPatch(data: Partial<TaskInput>) {
@@ -43,15 +44,38 @@ export async function createTask(projectId: string, data: TaskInput) {
   if (!parsed.success) return { error: 'Dados invalidos' }
 
   const adminClient = createAdminClient()
-  const { error } = await adminClient.from('tasks').insert({
+  const { data: createdTask, error } = await adminClient.from('tasks').insert({
     ...parsed.data,
     blocked_since: parsed.data.blocked_reason ? new Date().toISOString() : null,
     project_id: projectId,
     created_by: user.id,
     updated_at: new Date().toISOString(),
-  })
+  }).select('id, title, owner_type, status, assignee_id, mentioned_user_ids').single()
 
   if (error) return { error: error.message }
+
+  if (createdTask) {
+    const stakeholderIds = [createdTask.assignee_id, ...(createdTask.mentioned_user_ids ?? [])].filter(Boolean) as string[]
+    const stakeholders = await getProfilesByIds(stakeholderIds)
+
+    if (stakeholders.length > 0) {
+      await notifyTaskStakeholders({
+        projectId,
+        taskId: createdTask.id,
+        taskTitle: createdTask.title,
+        recipients: stakeholders,
+      })
+    }
+
+    if (createdTask.owner_type === 'client') {
+      await notifyClientPendingTask({
+        projectId,
+        taskId: createdTask.id,
+        taskTitle: createdTask.title,
+        status: createdTask.status,
+      })
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/tasks`)
   return { success: true }
@@ -69,6 +93,21 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus, proje
     .eq('id', taskId)
 
   if (error) return { error: error.message }
+
+  const { data: task } = await createAdminClient()
+    .from('tasks')
+    .select('id, title, owner_type, status')
+    .eq('id', taskId)
+    .single()
+
+  if (task?.owner_type === 'client' && (status === 'todo' || status === 'review')) {
+    await notifyClientPendingTask({
+      projectId,
+      taskId: task.id,
+      taskTitle: task.title,
+      status,
+    })
+  }
 
   revalidatePath(`/projects/${projectId}/tasks`)
 
@@ -93,6 +132,38 @@ export async function updateTask(taskId: string, data: Partial<TaskInput>, proje
     .eq('id', taskId)
 
   if (error) return { error: error.message }
+
+  const shouldNotifyStakeholders = Boolean(data.assignee_id || data.mentioned_user_ids || data.status)
+  if (shouldNotifyStakeholders) {
+    const { data: task } = await createAdminClient()
+      .from('tasks')
+      .select('id, title, owner_type, status, assignee_id, mentioned_user_ids')
+      .eq('id', taskId)
+      .single()
+
+    if (task) {
+      const stakeholderIds = [task.assignee_id, ...(task.mentioned_user_ids ?? [])].filter(Boolean) as string[]
+      const stakeholders = await getProfilesByIds(stakeholderIds)
+
+      if (stakeholders.length > 0) {
+        await notifyTaskStakeholders({
+          projectId,
+          taskId: task.id,
+          taskTitle: task.title,
+          recipients: stakeholders,
+        })
+      }
+
+      if (task.owner_type === 'client' && (task.status === 'todo' || task.status === 'review')) {
+        await notifyClientPendingTask({
+          projectId,
+          taskId: task.id,
+          taskTitle: task.title,
+          status: task.status,
+        })
+      }
+    }
+  }
 
   revalidatePath(`/projects/${projectId}/tasks`)
 
@@ -232,8 +303,21 @@ export async function createTasksBulk({
       owner_type: (clientUserIds.has(assigneeId) || hasClientAssignee ? 'client' : 'agency') as 'client' | 'agency',
     }))
 
-    const { error } = await createAdminClient().from('tasks').insert(rows)
+    const { data: createdRows, error } = await createAdminClient()
+      .from('tasks')
+      .insert(rows)
+      .select('id, title, status, owner_type')
     if (error) return { error: error.message }
+
+    const clientRows = (createdRows ?? []).filter((row) => row.owner_type === 'client')
+    await Promise.all(clientRows.map((row) =>
+      notifyClientPendingTask({
+        projectId,
+        taskId: row.id,
+        taskTitle: row.title,
+        status: row.status,
+      })
+    ))
   }
 
   revalidatePath(`/projects/${projectId}/tasks`)

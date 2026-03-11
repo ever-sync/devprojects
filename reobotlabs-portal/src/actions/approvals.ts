@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { notifyApprovalPending } from '@/lib/notification-events'
 import {
   approvalDecisionSchema,
   approvalSchema,
@@ -90,6 +91,13 @@ export async function createApprovalRequest(projectId: string, data: ApprovalInp
     await supabase.from('approvals').delete().eq('id', created.id)
     return { error: itemsError.message }
   }
+
+  await notifyApprovalPending({
+    projectId,
+    approvalId: created.id,
+    title: created.title,
+    approvalKind: created.approval_kind,
+  })
 
   revalidatePath(`/projects/${projectId}/approvals`)
   revalidatePath(`/projects/${projectId}`)

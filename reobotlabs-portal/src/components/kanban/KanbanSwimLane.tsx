@@ -22,7 +22,7 @@ export function KanbanSwimLane({
 }: KanbanSwimLaneProps) {
   const columns = [
     { id: 'unassigned', label: 'Sem etapa' },
-    ...phases,
+    ...phases.map((phase) => ({ id: phase.id, label: phase.name })),
   ]
 
   return (
