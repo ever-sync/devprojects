@@ -397,10 +397,11 @@ export type Database = {
           start_date: string | null
           target_end_date: string | null
           actual_end_date: string | null
-          next_steps: string | null
-          challenges: string | null
-          scope_definition: string | null
-          created_by: string | null
+            next_steps: string | null
+            challenges: string | null
+            scope_definition: string | null
+            project_link: string | null
+            created_by: string | null
           created_at: string
           updated_at: string
           public_token: string | null
@@ -411,6 +412,7 @@ export type Database = {
           baseline_value: number | null
           margin_percent: number | null
           contract_value: number | null
+          scope_document_id: string | null
           scope_version_current_id: string | null
           workspace_id: string
         }
@@ -426,10 +428,11 @@ export type Database = {
           start_date?: string | null
           target_end_date?: string | null
           actual_end_date?: string | null
-          next_steps?: string | null
-          challenges?: string | null
-          scope_definition?: string | null
-          created_by?: string | null
+            next_steps?: string | null
+            challenges?: string | null
+            scope_definition?: string | null
+            project_link?: string | null
+            created_by?: string | null
           created_at?: string
           updated_at?: string
           public_token?: string | null
@@ -440,6 +443,7 @@ export type Database = {
           baseline_value?: number | null
           margin_percent?: number | null
           contract_value?: number | null
+          scope_document_id?: string | null
           scope_version_current_id?: string | null
           workspace_id: string
         }
@@ -453,10 +457,11 @@ export type Database = {
           start_date?: string | null
           target_end_date?: string | null
           actual_end_date?: string | null
-          next_steps?: string | null
-          challenges?: string | null
-          scope_definition?: string | null
-          updated_at?: string
+            next_steps?: string | null
+            challenges?: string | null
+            scope_definition?: string | null
+            project_link?: string | null
+            updated_at?: string
           public_token?: string | null
           public_enabled?: boolean
           baseline_start_date?: string | null
@@ -465,6 +470,7 @@ export type Database = {
           baseline_value?: number | null
           margin_percent?: number | null
           contract_value?: number | null
+          scope_document_id?: string | null
           scope_version_current_id?: string | null
           workspace_id?: string
         }
@@ -474,6 +480,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_scope_document_id_fkey"
+            columns: ["scope_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
           {
@@ -563,6 +576,11 @@ export type Database = {
           blocked_reason: string | null
           blocked_since: string | null
           remaining_hours: number | null
+          detail_notes: string | null
+          checklist: Json
+          mentioned_user_ids: string[]
+          image_path: string | null
+          task_category: string
         }
         Insert: {
           id?: string
@@ -584,6 +602,11 @@ export type Database = {
           blocked_reason?: string | null
           blocked_since?: string | null
           remaining_hours?: number | null
+          detail_notes?: string | null
+          checklist?: Json
+          mentioned_user_ids?: string[]
+          image_path?: string | null
+          task_category?: string
         }
         Update: {
           phase_id?: string | null
@@ -601,6 +624,11 @@ export type Database = {
           blocked_reason?: string | null
           blocked_since?: string | null
           remaining_hours?: number | null
+          detail_notes?: string | null
+          checklist?: Json
+          mentioned_user_ids?: string[]
+          image_path?: string | null
+          task_category?: string
         }
         Relationships: [
           {

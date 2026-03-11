@@ -12,6 +12,7 @@ import {
   updateInvoiceStatus,
   upsertContract,
 } from '@/actions/finance'
+import { formatBRLInput, formatBRLValue, parseBRLInput } from '@/lib/currency'
 import type {
   AuditLog,
   BillingMilestone,
@@ -48,11 +49,7 @@ interface FinancePanelProps {
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null) return '-'
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return formatBRLValue(value)
 }
 
 function milestoneStatusLabel(status: BillingMilestone['status']) {
@@ -84,8 +81,8 @@ export function FinancePanel({
   const [isPending, startTransition] = useTransition()
   const [contractForm, setContractForm] = useState({
     contract_type: contract?.contract_type ?? 'fixed',
-    total_value: contract?.total_value?.toString() ?? '',
-    currency: contract?.currency ?? 'BRL',
+    total_value: formatBRLValue(contract?.total_value),
+    currency: 'BRL',
     start_date: contract?.start_date ?? '',
     end_date: contract?.end_date ?? '',
     billing_notes: contract?.billing_notes ?? '',
@@ -216,11 +213,10 @@ export function FinancePanel({
                 </SelectContent>
               </Select>
               <Input
-                type="number"
-                step="0.01"
                 placeholder="Valor total"
                 value={contractForm.total_value}
-                onChange={(event) => setContractForm((prev) => ({ ...prev, total_value: event.target.value }))}
+                inputMode="numeric"
+                onChange={(event) => setContractForm((prev) => ({ ...prev, total_value: formatBRLInput(event.target.value) }))}
                 disabled={isPending}
               />
             </div>
@@ -229,10 +225,7 @@ export function FinancePanel({
               <Input
                 placeholder="Moeda"
                 value={contractForm.currency}
-                onChange={(event) =>
-                  setContractForm((prev) => ({ ...prev, currency: event.target.value.toUpperCase() }))
-                }
-                disabled={isPending}
+                disabled
               />
               <Input
                 type="date"
@@ -262,8 +255,8 @@ export function FinancePanel({
                   startTransition(async () => {
                     const result = await upsertContract(projectId, {
                       contract_type: contractForm.contract_type,
-                      total_value: Number(contractForm.total_value),
-                      currency: contractForm.currency,
+                      total_value: parseBRLInput(contractForm.total_value),
+                      currency: 'BRL',
                       start_date: contractForm.start_date || null,
                       end_date: contractForm.end_date || null,
                       billing_notes: contractForm.billing_notes || null,
@@ -369,11 +362,10 @@ export function FinancePanel({
                 disabled={isPending}
               />
               <Input
-                type="number"
-                step="0.01"
                 placeholder="Valor"
                 value={milestoneForm.amount}
-                onChange={(event) => setMilestoneForm((prev) => ({ ...prev, amount: event.target.value }))}
+                inputMode="numeric"
+                onChange={(event) => setMilestoneForm((prev) => ({ ...prev, amount: formatBRLInput(event.target.value) }))}
                 disabled={isPending}
               />
               <Select
@@ -403,7 +395,7 @@ export function FinancePanel({
                       title: milestoneForm.title,
                       description: milestoneForm.description || null,
                       due_date: milestoneForm.due_date || null,
-                      amount: Number(milestoneForm.amount),
+                      amount: parseBRLInput(milestoneForm.amount),
                       status: milestoneForm.status,
                     })
                     if (result.error) {
@@ -517,11 +509,10 @@ export function FinancePanel({
                 disabled={isPending}
               />
               <Input
-                type="number"
-                step="0.01"
                 placeholder="Valor"
                 value={invoiceForm.amount}
-                onChange={(event) => setInvoiceForm((prev) => ({ ...prev, amount: event.target.value }))}
+                inputMode="numeric"
+                onChange={(event) => setInvoiceForm((prev) => ({ ...prev, amount: formatBRLInput(event.target.value) }))}
                 disabled={isPending}
               />
               <Select
@@ -560,7 +551,7 @@ export function FinancePanel({
                       invoice_number: invoiceForm.invoice_number,
                       issue_date: invoiceForm.issue_date,
                       due_date: invoiceForm.due_date || null,
-                      amount: Number(invoiceForm.amount),
+                      amount: parseBRLInput(invoiceForm.amount),
                       status: invoiceForm.status,
                       notes: invoiceForm.notes || null,
                     })

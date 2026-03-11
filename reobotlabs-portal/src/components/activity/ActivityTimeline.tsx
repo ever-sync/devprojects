@@ -37,56 +37,65 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
   if (activities.length === 0) return null
 
   return (
-    <div className="space-y-6 relative before:absolute before:inset-0 before:left-5 before:w-px before:bg-border before:mt-2 before:mb-2">
+    <div className="relative space-y-5 before:absolute before:bottom-4 before:left-[18px] before:top-4 before:w-px before:bg-slate-200/70 sm:space-y-6 sm:before:left-5">
       {activities.map((activity) => {
         const config = ACTION_CONFIG[activity.action] ?? ACTION_CONFIG.created
         const Icon = config.icon
 
         return (
-          <div key={activity.id} className="relative pl-12">
+          <div key={activity.id} className="group relative pl-12 sm:pl-16">
             {/* Timeline dot/icon */}
-            <div className={`absolute left-0 top-0.5 w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center z-10 ${config.color}`}>
-              <Icon className="w-5 h-5" />
+            <div className={`absolute left-0 top-1 z-10 flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition-transform group-hover:scale-105 sm:h-11 sm:w-11 ${config.color}`}>
+              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
 
-            <div className="bg-card/50 border border-border/50 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <div className="flex items-center gap-2">
-                  <Avatar
-                    name={activity.user.full_name}
-                    avatarUrl={activity.user.avatar_url}
-                    size="sm"
-                  />
+            <div className="rounded-[24px] border border-white/80 bg-white/55 p-4 font-medium shadow-[0_20px_50px_rgba(15,23,42,0.04)] backdrop-blur-xl transition-all duration-300 hover:bg-white/70 hover:shadow-lg sm:rounded-[32px] sm:p-6">
+              <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar
+                      name={activity.user.full_name}
+                      avatarUrl={activity.user.avatar_url}
+                      size="sm"
+                    />
+                    <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground leading-none">
+                    <p className="text-sm font-bold text-slate-950 leading-none">
                       {activity.user.full_name}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {config.label} • {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: ptBR })}
+                    <p className="text-[10px] text-slate-400 mt-1.5 font-bold uppercase tracking-wider">
+                      {config.label}
                     </p>
                   </div>
                 </div>
+                <div className="w-fit rounded-full bg-slate-100/70 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
+                  {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: ptBR })}
+                </div>
               </div>
 
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-slate-600 leading-relaxed">
                 {activity.action === 'status_changed' && (
                   <p>
-                    De <span className="font-medium text-foreground">{STATUS_LABELS[activity.old_value ?? ''] ?? activity.old_value}</span> para{' '}
-                    <span className="font-medium text-primary">{STATUS_LABELS[activity.new_value ?? ''] ?? activity.new_value}</span>
+                    Status alterado de <span className="font-bold text-slate-400 line-through decoration-slate-300/50">{STATUS_LABELS[activity.old_value ?? ''] ?? activity.old_value}</span> para{' '}
+                    <span className="font-bold text-slate-950 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 ml-1">{STATUS_LABELS[activity.new_value ?? ''] ?? activity.new_value}</span>
                   </p>
                 )}
                 {activity.action === 'health_changed' && (
                   <p>
-                    De <span className={HEALTH_CONFIG[activity.old_value ?? '']?.color ?? 'text-foreground'}>
+                    Saúde alterada de <span className={`font-bold ${HEALTH_CONFIG[activity.old_value ?? '']?.color ?? 'text-slate-400'}`}>
                       {HEALTH_CONFIG[activity.old_value ?? '']?.label ?? activity.old_value}
                     </span> para{' '}
-                    <span className={HEALTH_CONFIG[activity.new_value ?? '']?.color ?? 'text-primary'}>
+                    <span className={`font-bold inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 ml-1 ${HEALTH_CONFIG[activity.new_value ?? '']?.color ?? 'text-slate-950'}`}>
                       {HEALTH_CONFIG[activity.new_value ?? '']?.label ?? activity.new_value}
                     </span>
                   </p>
                 )}
                 {activity.action === 'created' && (
-                  <p>Projeto iniciado: <span className="font-semibold text-foreground">{activity.new_value}</span></p>
+                  <p>Projeto iniciado: <span className="font-bold text-slate-950">{activity.new_value}</span></p>
+                )}
+                {activity.action === 'phase_updated' && (
+                  <p>Iniciou a fase <span className="font-bold text-slate-950">{activity.new_value}</span></p>
                 )}
               </div>
             </div>

@@ -53,48 +53,48 @@ export function PublicApprovalPanel({ token, approvals }: PublicApprovalPanelPro
         const kindLabel = KIND_LABELS[approval.approval_kind] ?? approval.approval_kind
 
         return (
-          <div key={approval.id} className="rounded-[24px] border border-white/70 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
+          <div key={approval.id} className="group overflow-hidden rounded-[40px] border border-white/80 bg-white/40 backdrop-blur-xl p-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] transition-all duration-300 hover:bg-white/60">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between font-medium">
+              <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/50 backdrop-blur-sm px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     {kindLabel}
                   </span>
-                  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusStyle}`}>
+                  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${statusStyle} bg-white/50 backdrop-blur-sm`}>
                     {statusLabel}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-950">{approval.title}</h3>
+                  <h3 className="text-xl font-bold tracking-tight text-slate-950">{approval.title}</h3>
                   {approval.description && (
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{approval.description}</p>
+                    <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 font-medium">{approval.description}</p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 lg:max-w-[220px]">
-                <div className="flex items-center gap-2">
-                  <CalendarClock className="h-4 w-4 text-slate-500" />
-                  <span>{approval.due_date ? `Prazo ${approval.due_date}` : 'Sem prazo definido'}</span>
+              <div className="rounded-2xl border border-white/80 bg-white/50 px-5 py-4 text-xs shadow-sm transition-all group-hover:bg-white lg:max-w-[240px]">
+                <div className="flex items-center gap-2 text-slate-500 font-bold">
+                  <CalendarClock className="h-4 w-4" />
+                  <span className="uppercase tracking-wider">{approval.due_date ? `Prazo: ${approval.due_date}` : 'Sem prazo definido'}</span>
                 </div>
               </div>
             </div>
 
             {approval.items?.length ? (
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
                 {approval.items.map((item) => (
-                  <div key={item.id} className="rounded-3xl border border-slate-200/80 bg-slate-50/80 px-4 py-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-white text-slate-700">
+                  <div key={item.id} className="group/item rounded-[32px] border border-white/80 bg-white/50 p-6 transition-all hover:bg-white hover:shadow-md">
+                    <div className="mb-3 flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-transform group-hover/item:scale-110">
                         <ClipboardCheck className="h-4 w-4" />
                       </span>
-                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <p className="text-sm font-bold text-slate-900 tracking-tight">{item.label}</p>
                     </div>
                     {item.details ? (
-                      <p className="text-sm leading-6 text-slate-600">{item.details}</p>
+                      <p className="text-sm leading-7 text-slate-600 font-medium">{item.details}</p>
                     ) : (
-                      <p className="text-sm text-slate-400">Sem detalhes adicionais.</p>
+                      <p className="text-sm italic text-slate-400">Nenhum detalhe adicional.</p>
                     )}
                   </div>
                 ))}
@@ -102,7 +102,7 @@ export function PublicApprovalPanel({ token, approvals }: PublicApprovalPanelPro
             ) : null}
 
             {approval.status === 'pending' ? (
-              <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button
                   size="sm"
                   disabled={isPending}
@@ -113,18 +113,18 @@ export function PublicApprovalPanel({ token, approvals }: PublicApprovalPanelPro
                         toast.error(result.error)
                         return
                       }
-                      toast.success('Aprovacao registrada')
+                      toast.success('Aprovação registrada com sucesso!')
                       router.refresh()
                     })
                   }
-                  className="h-10 w-full rounded-full bg-slate-950 px-4 text-xs text-white hover:bg-slate-800 sm:w-auto"
+                  className="h-12 flex-1 sm:flex-none rounded-2xl bg-slate-950 px-8 text-xs font-bold text-white transition-all hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-950/20 sm:w-auto"
                 >
-                  {isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />}
-                  Aprovar
+                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                  Aprovar agora
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   disabled={isPending}
                   onClick={() =>
                     startTransition(async () => {
@@ -133,14 +133,14 @@ export function PublicApprovalPanel({ token, approvals }: PublicApprovalPanelPro
                         toast.error(result.error)
                         return
                       }
-                      toast.success('Revisao solicitada')
+                      toast.success('Revisão solicitada com sucesso!')
                       router.refresh()
                     })
                   }
-                  className="h-10 w-full rounded-full border-slate-300 bg-white px-4 text-xs text-slate-700 hover:bg-slate-50 sm:w-auto"
+                  className="h-12 flex-1 sm:flex-none rounded-2xl border border-slate-200 bg-white px-6 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 sm:w-auto"
                 >
-                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                  Pedir revisao
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Solicitar revisão
                 </Button>
               </div>
             ) : null}

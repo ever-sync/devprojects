@@ -43,7 +43,7 @@ export default async function ActivityPage({ params }: Props) {
   ])
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <PageHeader
         title="Atividade"
         breadcrumb={[
@@ -54,9 +54,9 @@ export default async function ActivityPage({ params }: Props) {
 
       <ProjectTabs projectId={id} isAdmin={isAdmin} />
 
-      <div className="space-y-10 mt-6">
+      <div className="mt-6 space-y-10">
         {activitiesRes.data.length > 0 && (
-          <section>
+          <section className="max-w-5xl">
             <h2 className="text-sm font-semibold text-foreground mb-6 flex items-center gap-2">
               <History className="w-4 h-4 text-primary" />
               Histórico de Alterações
@@ -65,13 +65,15 @@ export default async function ActivityPage({ params }: Props) {
           </section>
         )}
 
-        <section className="pt-6 border-t border-border">
-          <ActivityFeedRealtime
-            initialComments={(commentsRes.data ?? []) as unknown as CommentWithAuthor[]}
-            projectId={id}
-            isAdmin={isAdmin}
-          />
-        </section>
+        <div className="max-w-5xl">
+          <section className="border-t border-border pt-6">
+            <ActivityFeedRealtime
+              initialComments={(commentsRes.data ?? []) as unknown as CommentWithAuthor[]}
+              projectId={id}
+              isAdmin={isAdmin}
+            />
+          </section>
+        </div>
       </div>
     </div>
   )

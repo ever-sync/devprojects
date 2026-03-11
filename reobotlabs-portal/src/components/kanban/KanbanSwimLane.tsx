@@ -1,6 +1,5 @@
 'use client'
 
-import { KANBAN_COLUMNS } from '@/lib/constants'
 import { KanbanColumn } from './KanbanColumn'
 import type { Task, Profile, TaskOwner } from '@/types'
 
@@ -9,6 +8,7 @@ interface KanbanSwimLaneProps {
   label: string
   tasks: (Task & { assignee?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null })[]
   isClientUser: boolean
+  phases: Array<{ id: string; name: string }>
   onCardClick?: (task: Task) => void
 }
 
@@ -17,8 +17,14 @@ export function KanbanSwimLane({
   label,
   tasks,
   isClientUser,
+  phases,
   onCardClick,
 }: KanbanSwimLaneProps) {
+  const columns = [
+    { id: 'unassigned', label: 'Sem etapa' },
+    ...phases,
+  ]
+
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
@@ -29,12 +35,12 @@ export function KanbanSwimLane({
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-3">
-        {KANBAN_COLUMNS.map((col) => (
+        {columns.map((col) => (
           <KanbanColumn
             key={`${ownerType}-${col.id}`}
             id={`${ownerType}::${col.id}`}
             label={col.label}
-            tasks={tasks.filter((t) => t.status === col.id)}
+            tasks={tasks.filter((t) => (col.id === 'unassigned' ? !t.phase_id : t.phase_id === col.id))}
             isClientUser={isClientUser}
             onCardClick={onCardClick}
           />

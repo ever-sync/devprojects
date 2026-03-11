@@ -20,7 +20,7 @@ import type { Client, Project } from '@/types'
 
 interface ProjectFormProps {
   clients: Pick<Client, 'id' | 'name'>[]
-  templates?: { id: string, name: string }[]
+  templates?: { id: string; name: string }[]
   project?: Project
   defaultClientId?: string
 }
@@ -49,6 +49,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
           progress_percent: project.progress_percent,
           start_date: project.start_date ?? undefined,
           target_end_date: project.target_end_date ?? undefined,
+          project_link: project.project_link ?? undefined,
           next_steps: project.next_steps ?? undefined,
           challenges: project.challenges ?? undefined,
           scope_definition: project.scope_definition ?? undefined,
@@ -65,9 +66,14 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
     setIsLoading(true)
     setError(null)
 
+    const normalizedData = {
+      ...data,
+      project_link: data.project_link?.trim() ? data.project_link.trim() : null,
+    }
+
     const result = project
-      ? await updateProject(project.id, data)
-      : await createProject({ ...data, templateId })
+      ? await updateProject(project.id, normalizedData)
+      : await createProject({ ...normalizedData, templateId })
 
     if (result?.error) {
       setError(result.error)
@@ -76,9 +82,9 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-2xl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="sm:col-span-2 space-y-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Nome do Projeto *</Label>
           <Input id="name" placeholder="Ex: Portal E-commerce" {...register('name')} />
           {errors.name && <p className="text-sm text-red-400">{errors.name.message}</p>}
@@ -115,7 +121,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="saas">SaaS</SelectItem>
-              <SelectItem value="automation">Automação</SelectItem>
+              <SelectItem value="automation">Automacao</SelectItem>
               <SelectItem value="ai_agent">Agente de IA</SelectItem>
             </SelectContent>
           </Select>
@@ -134,14 +140,14 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
             <SelectContent>
               <SelectItem value="active">Ativo</SelectItem>
               <SelectItem value="paused">Pausado</SelectItem>
-              <SelectItem value="completed">Concluído</SelectItem>
+              <SelectItem value="completed">Concluido</SelectItem>
               <SelectItem value="cancelled">Cancelado</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Saúde do Projeto</Label>
+          <Label>Saude do Projeto</Label>
           <Select
             defaultValue={project?.health ?? 'green'}
             onValueChange={(v) => setValue('health', v as ProjectInput['health'])}
@@ -150,9 +156,9 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="green">Verde — No Prazo</SelectItem>
-              <SelectItem value="yellow">Amarelo — Atenção</SelectItem>
-              <SelectItem value="red">Vermelho — Crítico</SelectItem>
+              <SelectItem value="green">Verde - No Prazo</SelectItem>
+              <SelectItem value="yellow">Amarelo - Atencao</SelectItem>
+              <SelectItem value="red">Vermelho - Critico</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -207,19 +213,33 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="start_date">Data de Início</Label>
+          <Label htmlFor="start_date">Data de Inicio</Label>
           <Input id="start_date" type="date" {...register('start_date')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="target_end_date">Previsão de Entrega</Label>
+          <Label htmlFor="target_end_date">Previsao de Entrega</Label>
           <Input id="target_end_date" type="date" {...register('target_end_date')} />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="project_link">Link do Projeto</Label>
+          <Input
+            id="project_link"
+            type="url"
+            placeholder="https://app.seuprojeto.com.br ou link do ambiente, Figma, Notion..."
+            {...register('project_link')}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Campo opcional. Esse link aparece no painel do cliente para acesso rapido ao projeto.
+          </p>
+          {errors.project_link && <p className="text-sm text-red-400">{errors.project_link.message}</p>}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea id="description" rows={2} placeholder="Breve descrição do projeto" {...register('description')} />
+        <Label htmlFor="description">Descricao</Label>
+        <Textarea id="description" rows={2} placeholder="Breve descricao do projeto" {...register('description')} />
       </div>
 
       <div className="space-y-2">
@@ -227,17 +247,17 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
         <Textarea
           id="scope_definition"
           rows={4}
-          placeholder="O que está e o que NÃO está incluído no escopo..."
+          placeholder="O que esta e o que NAO esta incluido no escopo..."
           {...register('scope_definition')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="next_steps">Próximos Passos desta Semana</Label>
+        <Label htmlFor="next_steps">Proximos Passos desta Semana</Label>
         <Textarea
           id="next_steps"
           rows={3}
-          placeholder="O que a equipe está trabalhando agora..."
+          placeholder="O que a equipe esta trabalhando agora..."
           {...register('next_steps')}
         />
       </div>
@@ -253,7 +273,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-md border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}

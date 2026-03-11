@@ -90,32 +90,32 @@ export function PublicTaskPanel({ tasks, token }: PublicTaskPanelProps) {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-3xl border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)]">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Sua acao</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{clientPending.length}</p>
-          <p className="mt-1 text-sm text-slate-500">Itens aguardando retorno</p>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="group rounded-[32px] border border-white/80 bg-white/40 backdrop-blur-md px-5 py-6 shadow-[0_20px_50px_rgba(15,23,42,0.04)] transition-all hover:bg-white/60">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Sua ação</p>
+          <p className="mt-3 text-3xl font-bold text-slate-950 group-hover:text-amber-600 transition-colors">{clientPending.length}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Itens aguardando retorno</p>
         </div>
-        <div className="rounded-3xl border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)]">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Equipe em execucao</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{agencyActive.length}</p>
-          <p className="mt-1 text-sm text-slate-500">Tarefas em andamento interno</p>
+        <div className="group rounded-[32px] border border-white/80 bg-white/40 backdrop-blur-md px-5 py-6 shadow-[0_20px_50px_rgba(15,23,42,0.04)] transition-all hover:bg-white/60">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Em execução</p>
+          <p className="mt-3 text-3xl font-bold text-slate-950 group-hover:text-sky-600 transition-colors">{agencyActive.length}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Produção interna ativa</p>
         </div>
-        <div className="rounded-3xl border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)]">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Entregas concluidas</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{done.length}</p>
-          <p className="mt-1 text-sm text-slate-500">Aprovadas ou finalizadas</p>
+        <div className="group rounded-[32px] border border-white/80 bg-white/40 backdrop-blur-md px-5 py-6 shadow-[0_20px_50px_rgba(15,23,42,0.04)] transition-all hover:bg-white/60">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Finalizadas</p>
+          <p className="mt-3 text-3xl font-bold text-slate-950 group-hover:text-emerald-600 transition-colors">{done.length}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Aprovadas com sucesso</p>
         </div>
       </div>
 
-      <section className="rounded-[24px] border border-white/70 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-            <AlertCircle className="h-5 w-5" />
+      <section className="rounded-[40px] border border-white/80 bg-white/40 backdrop-blur-xl p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
+        <div className="mb-6 flex items-center gap-4">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+            <AlertCircle className="h-6 w-6" />
           </span>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Prioridade</p>
-            <h3 className="text-lg font-semibold tracking-[-0.03em] text-slate-950">Aguardando sua acao</h3>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Fila de espera</p>
+            <h3 className="text-xl font-bold tracking-tight text-slate-950">Aguardando sua decisão</h3>
           </div>
         </div>
 
@@ -131,62 +131,62 @@ export function PublicTaskPanel({ tasks, token }: PublicTaskPanelProps) {
               const isRevisionOpen = revisionTaskId === task.id
 
               return (
-                <div key={task.id} className="overflow-hidden rounded-3xl border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))]">
-                  <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="text-base font-semibold tracking-[-0.02em] text-slate-950">{task.title}</span>
+                <div key={task.id} className="group overflow-hidden rounded-[32px] border border-amber-200/50 bg-white/60 transition-all duration-300 hover:bg-white/90 hover:shadow-lg">
+                  <div className="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-lg font-bold tracking-tight text-slate-950">{task.title}</span>
                         {priorityConfig && (
-                          <span className={`rounded-full border border-current/10 px-2.5 py-1 text-[11px] font-semibold ${priorityConfig.color}`}>
+                          <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${priorityConfig.color} bg-white/50 backdrop-blur-sm`}>
                             {priorityConfig.label}
                           </span>
                         )}
                       </div>
 
                       {task.description && !task.description.startsWith('[Revis') && (
-                        <p className="max-w-2xl text-sm leading-6 text-slate-600">{task.description}</p>
+                        <p className="max-w-2xl text-sm leading-7 text-slate-600 font-medium">{task.description}</p>
                       )}
 
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100/50 px-3 py-1.5 text-[11px] font-semibold text-slate-600">
                           <Clock className="h-3.5 w-3.5" />
                           {TASK_STATUS_LABELS[task.status] ?? task.status}
                         </span>
                         {task.due_date && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50/50 px-3 py-1.5 text-[11px] font-semibold text-indigo-600">
                             <Clock className="h-3.5 w-3.5" />
-                            {format(new Date(task.due_date), "d 'de' MMM", { locale: ptBR })}
+                            Entrega: {format(new Date(task.due_date), "d 'de' MMM", { locale: ptBR })}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid shrink-0 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                    <div className="flex gap-2 sm:shrink-0 sm:items-center">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         disabled={isProcessing}
                         onClick={() => {
                           setRevisionTaskId(isRevisionOpen ? null : task.id)
                           setRevisionText('')
                         }}
-                        className="h-10 w-full rounded-full border-amber-300 bg-white px-4 text-xs text-amber-700 hover:bg-amber-50 sm:w-auto"
+                        className="h-11 flex-1 sm:flex-none rounded-2xl border border-slate-200 bg-white px-5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 sm:w-auto"
                       >
-                        <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
-                        Solicitar revisao
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Revisar
                       </Button>
                       <Button
                         size="sm"
                         disabled={isProcessing}
                         onClick={() => handleApprove(task)}
-                        className="h-10 w-full rounded-full bg-slate-950 px-4 text-xs text-white hover:bg-slate-800 sm:w-auto"
+                        className="h-11 flex-1 sm:flex-none rounded-2xl bg-slate-950 px-6 text-xs font-bold text-white transition-all hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-950/20 sm:w-auto"
                       >
                         {isProcessing && !isRevisionOpen ? (
-                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
                         )}
-                        Aprovar entrega
+                        Aprovar
                       </Button>
                     </div>
                   </div>

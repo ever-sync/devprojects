@@ -30,6 +30,10 @@ async function requireUser() {
   return { supabase, user, role: profile?.role ?? null }
 }
 
+function sanitizeFileName(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '-')
+}
+
 export async function createTask(projectId: string, data: TaskInput) {
   const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
@@ -100,6 +104,78 @@ export async function updateTask(taskId: string, data: Partial<TaskInput>, proje
   })
 
   return { success: true }
+}
+
+export async function getTaskImageUrl(taskId: string) {
+  const { user } = await requireUser()
+  if (!user) return { error: 'Nao autenticado', url: null }
+
+  const adminClient = createAdminClient()
+  const { data: task, error } = await adminClient
+    .from('tasks')
+    .select('image_path')
+    .eq('id', taskId)
+    .single()
+
+  if (error) return { error: error.message, url: null }
+  if (!task?.image_path) return { error: null, url: null }
+
+  const { data, error: signedUrlError } = await adminClient
+    .storage
+    .from('project-files')
+    .createSignedUrl(task.image_path, 3600)
+
+  if (signedUrlError) return { error: signedUrlError.message, url: null }
+  return { error: null, url: data?.signedUrl ?? null }
+}
+
+export async function uploadTaskImage(projectId: string, taskId: string, formData: FormData) {
+  const { user, role } = await requireUser()
+  if (!user) return { error: 'Nao autenticado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
+
+  const file = formData.get('image') as File | null
+  if (!file || file.size === 0) return { error: 'Nenhum arquivo selecionado' }
+  if (!file.type.startsWith('image/')) return { error: 'Envie uma imagem valida' }
+
+  const adminClient = createAdminClient()
+  const { data: existingTask, error: taskError } = await adminClient
+    .from('tasks')
+    .select('image_path')
+    .eq('id', taskId)
+    .eq('project_id', projectId)
+    .single()
+
+  if (taskError) return { error: taskError.message }
+
+  const ext = file.name.split('.').pop() ?? 'png'
+  const path = `${projectId}/task-assets/${taskId}/${Date.now()}-${sanitizeFileName(file.name || `image.${ext}`)}`
+
+  const { error: uploadError } = await adminClient
+    .storage
+    .from('project-files')
+    .upload(path, file, { upsert: false })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { error: updateError } = await adminClient
+    .from('tasks')
+    .update({
+      image_path: path,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', taskId)
+
+  if (updateError) return { error: updateError.message }
+
+  if (existingTask?.image_path) {
+    await adminClient.storage.from('project-files').remove([existingTask.image_path])
+  }
+
+  const { data: signedUrl } = await adminClient.storage.from('project-files').createSignedUrl(path, 3600)
+
+  revalidatePath(`/projects/${projectId}/tasks`)
+  return { success: true, imagePath: path, imageUrl: signedUrl?.signedUrl ?? null }
 }
 
 export async function createTasksBulk({

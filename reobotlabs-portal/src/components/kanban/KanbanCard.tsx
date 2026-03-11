@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { TASK_PRIORITY_CONFIG } from '@/lib/constants'
+import { TASK_PRIORITY_CONFIG, TASK_STATUS_LABELS } from '@/lib/constants'
 import type { Task, Profile } from '@/types'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -77,6 +77,10 @@ export function KanbanCard({ task, isClientUser, isDragging, onClick }: KanbanCa
           </p>
 
           <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              {TASK_STATUS_LABELS[task.status] ?? task.status}
+            </span>
+
             <span className={`text-xs font-medium ${priorityConfig.color}`}>
               {priorityConfig.label}
             </span>

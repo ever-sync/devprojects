@@ -19,9 +19,10 @@ export const projectSchema = z.object({
   progress_percent: z.number().int().min(0).max(100).optional(),
   start_date: z.string().optional().nullable(),
   target_end_date: z.string().optional().nullable(),
+  project_link: z.string().url('URL invalida').optional().or(z.literal('')).nullable(),
   next_steps: z.string().max(1000).optional().nullable(),
   challenges: z.string().max(1000).optional().nullable(),
-  scope_definition: z.string().max(5000).optional().nullable(),
+  scope_definition: z.string().max(20000).optional().nullable(),
 })
 
 export const taskSchema = z.object({
@@ -37,6 +38,15 @@ export const taskSchema = z.object({
   actual_hours: z.number().min(0, 'Invalido').optional().nullable(),
   remaining_hours: z.number().min(0, 'Invalido').optional().nullable(),
   blocked_reason: z.string().max(1000).optional().nullable(),
+  detail_notes: z.string().max(5000).optional().nullable(),
+  checklist: z.array(z.object({
+    id: z.string(),
+    text: z.string().max(300),
+    done: z.boolean(),
+  })).optional(),
+  mentioned_user_ids: z.array(z.string().uuid()).optional(),
+  image_path: z.string().max(500).optional().nullable(),
+  task_category: z.enum(['saas', 'automation', 'other']).optional(),
 })
 
 export const phaseSchema = z.object({
@@ -90,7 +100,7 @@ export const scopeVersionSchema = z.object({
   assumptions: z.string().max(3000).optional().nullable(),
   exclusions: z.string().max(3000).optional().nullable(),
   dependencies: z.string().max(3000).optional().nullable(),
-  scope_body: z.string().min(10, 'Descreva o escopo com mais detalhes').max(10000),
+  scope_body: z.string().min(10, 'Descreva o escopo com mais detalhes').max(30000),
 })
 
 export const projectBaselineSchema = z.object({

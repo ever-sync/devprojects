@@ -12,12 +12,12 @@ import {
   useSensors,
   closestCorners,
 } from '@dnd-kit/core'
-import { updateTaskStatus } from '@/actions/tasks'
+import { updateTask } from '@/actions/tasks'
 import { KanbanSwimLane } from './KanbanSwimLane'
 import { KanbanCard } from './KanbanCard'
 import { TaskSheet } from './TaskSheet'
 import { TASK_PRIORITY_CONFIG } from '@/lib/constants'
-import type { Task, Profile, TaskStatus } from '@/types'
+import type { Task, Profile } from '@/types'
 
 interface KanbanBoardProps {
   projectId: string
@@ -25,9 +25,19 @@ interface KanbanBoardProps {
   initialTasks: (Task & { assignee?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null })[]
   isAdmin: boolean
   teamMembers?: Pick<Profile, 'id' | 'full_name'>[]
+  phases?: Array<{ id: string; name: string }>
+  mentionableUsers?: Array<{ id: string; full_name: string; role: 'admin' | 'client' }>
 }
 
-export function KanbanBoard({ projectId, currentUserId, initialTasks, isAdmin, teamMembers = [] }: KanbanBoardProps) {
+export function KanbanBoard({
+  projectId,
+  currentUserId,
+  initialTasks,
+  isAdmin,
+  teamMembers = [],
+  phases = [],
+  mentionableUsers = [],
+}: KanbanBoardProps) {
   const [tasks, setTasks] = useState(initialTasks)
   const [activeTask, setActiveTask] = useState<(typeof initialTasks)[0] | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -59,26 +69,26 @@ export function KanbanBoard({ projectId, currentUserId, initialTasks, isAdmin, t
     const taskId = active.id as string
     const overId = over.id as string
 
-    // overId format: "ownerType::status" (from KanbanColumn droppable id)
+    // overId format: "ownerType::phaseId" (from KanbanColumn droppable id)
     const parts = overId.split('::')
     if (parts.length !== 2) return
 
-    const newStatus = parts[1] as TaskStatus
+    const nextPhaseId = parts[1] === 'unassigned' ? null : parts[1]
 
     const task = tasks.find((t) => t.id === taskId)
-    if (!task || task.status === newStatus) return
+    if (!task || (task.phase_id ?? null) === nextPhaseId) return
 
     // Optimistic update
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, phase_id: nextPhaseId } : t))
     )
 
     // Sync to DB
-    updateTaskStatus(taskId, newStatus, projectId).then((result) => {
+    updateTask(taskId, { phase_id: nextPhaseId }, projectId).then((result) => {
       if (result?.error) {
         // Revert on error
         setTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, status: task.status } : t))
+          prev.map((t) => (t.id === taskId ? { ...t, phase_id: task.phase_id } : t))
         )
       }
     })
@@ -139,6 +149,7 @@ export function KanbanBoard({ projectId, currentUserId, initialTasks, isAdmin, t
           label="Tarefas da Agência"
           tasks={agencyTasks}
           isClientUser={!isAdmin}
+          phases={phases}
           onCardClick={handleCardClick}
         />
 
@@ -147,6 +158,7 @@ export function KanbanBoard({ projectId, currentUserId, initialTasks, isAdmin, t
           label="Aprovações do Cliente"
           tasks={clientTasks}
           isClientUser={!isAdmin}
+          phases={phases}
           onCardClick={handleCardClick}
         />
 
@@ -162,11 +174,14 @@ export function KanbanBoard({ projectId, currentUserId, initialTasks, isAdmin, t
       </DndContext>
 
       <TaskSheet
+        key={selectedTask?.id ?? 'task-sheet'}
         task={selectedTask}
         projectId={projectId}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         teamMembers={teamMembers}
+        phases={phases}
+        mentionableUsers={mentionableUsers}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
       />

@@ -58,7 +58,8 @@ export function ProjectTabs({ projectId, isAdmin }: { projectId: string; isAdmin
     : CLIENT_TABS
 
   return (
-    <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border">
+    <div className="mb-6 border-b border-border">
+      <div className="flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent md:flex-wrap md:overflow-x-visible">
       {tabs.map((tab) => {
         const href = tab.key ? `${base}/${tab.key}` : base
         const isActive = tab.key
@@ -82,6 +83,7 @@ export function ProjectTabs({ projectId, isAdmin }: { projectId: string; isAdmin
           </Link>
         )
       })}
+      </div>
     </div>
   )
 }

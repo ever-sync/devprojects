@@ -5,6 +5,7 @@ import { ClientTaskPanel } from '@/components/kanban/ClientTaskPanel'
 import { AddTaskButton } from '@/components/kanban/AddTaskButton'
 import { AITaskButton } from '@/components/kanban/AITaskButton'
 import { ExportTasksButton } from '@/components/kanban/ExportTasksButton'
+import { KanbanPhaseManager } from '@/components/kanban/KanbanPhaseManager'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ProjectTabs } from '@/components/projects/ProjectTabs'
 
@@ -26,7 +27,7 @@ export default async function TasksPage({ params }: Props) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name')
+    .select('id, name, client_id')
     .eq('id', id)
     .single()
 
@@ -38,15 +39,31 @@ export default async function TasksPage({ params }: Props) {
     .eq('project_id', id)
     .order('order_index')
 
+  const { data: phases } = await supabase
+    .from('project_phases')
+    .select('*')
+    .eq('project_id', id)
+    .order('order_index')
+
   const isAdmin = profile?.role === 'admin'
 
   let teamMembers: { id: string; full_name: string }[] = []
+  let mentionableUsers: { id: string; full_name: string; role: 'admin' | 'client' }[] = []
   if (isAdmin) {
     const { data: members } = await supabase
       .from('profiles')
-      .select('id, full_name')
-      .eq('role', 'admin')
-    teamMembers = members ?? []
+      .select('id, full_name, role')
+      .in('role', ['admin', 'client'])
+
+    const { data: clientUsers } = await supabase
+      .from('client_users')
+      .select('user_id')
+      .eq('client_id', project.client_id)
+
+    const clientUserIds = new Set((clientUsers ?? []).map((item) => item.user_id))
+    mentionableUsers = (members ?? []).filter((member) => member.role === 'admin' || clientUserIds.has(member.id)) as typeof mentionableUsers
+    teamMembers = mentionableUsers.filter((member) => member.role === 'admin')
+      .map((member) => ({ id: member.id, full_name: member.full_name }))
   }
 
   return (
@@ -60,6 +77,10 @@ export default async function TasksPage({ params }: Props) {
         action={
           isAdmin ? (
             <div className="flex items-center gap-2">
+              <KanbanPhaseManager
+                projectId={id}
+                phases={phases ?? []}
+              />
               <ExportTasksButton projectId={id} projectName={project.name} />
               <AITaskButton projectId={id} />
               <AddTaskButton projectId={id} />
@@ -77,6 +98,8 @@ export default async function TasksPage({ params }: Props) {
           initialTasks={(tasks ?? []) as unknown as Parameters<typeof KanbanBoard>[0]['initialTasks']}
           isAdmin={isAdmin}
           teamMembers={teamMembers}
+          phases={(phases ?? []).map((phase) => ({ id: phase.id, name: phase.name }))}
+          mentionableUsers={mentionableUsers}
         />
       ) : (
         <ClientTaskPanel

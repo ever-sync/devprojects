@@ -45,29 +45,32 @@ function PublicDocumentRow({ doc, token }: { doc: Document; token: string }) {
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-3xl border border-slate-200/80 bg-slate-50/80 px-4 py-4 transition-colors hover:border-slate-300 hover:bg-white sm:items-center sm:gap-4">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white">
+    <div className="group/doc border border-white/80 bg-white/50 backdrop-blur-sm relative flex items-center gap-4 rounded-[28px] p-5 transition-all duration-300 hover:bg-white hover:shadow-lg">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition-transform group-hover/doc:scale-110">
         <FileIcon mimeType={doc.mime_type} />
       </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-900 sm:truncate">{doc.name}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <span className={`rounded-full border px-2.5 py-1 font-semibold ${badgeClass}`}>
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="truncate text-sm font-bold text-slate-950 tracking-tight" title={doc.name}>{doc.name}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${badgeClass} bg-white/40 backdrop-blur-sm`}>
             {getDocumentTypeLabel(doc.doc_type)}
           </span>
-          {doc.file_size ? <span>{formatBytes(doc.file_size)}</span> : null}
-          <span>{format(new Date(doc.created_at), "d 'de' MMM", { locale: ptBR })}</span>
+          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            {doc.file_size ? <span>{formatBytes(doc.file_size)}</span> : null}
+            <span className="h-1 w-1 rounded-full bg-slate-300" />
+            <span>{format(new Date(doc.created_at), "d 'de' MMM", { locale: ptBR })}</span>
+          </div>
         </div>
       </div>
 
       <button
         type="button"
         onClick={handleDownload}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-500 transition-colors hover:bg-slate-950 hover:text-white"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 transition-all duration-300 hover:bg-slate-950 hover:text-white hover:shadow-md"
         title="Baixar arquivo"
       >
-        <Download className="h-4 w-4" />
+        <Download className="h-5 w-5" />
       </button>
     </div>
   )
@@ -97,20 +100,20 @@ export function PublicDocumentList({ documents, token }: PublicDocumentListProps
   const presentSections = SECTION_ORDER.filter((section) => grouped[section]?.length > 0)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {presentSections.map((section) => (
-        <div key={section} className="rounded-[24px] border border-white/70 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-6">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
-                <FolderOpen className="h-5 w-5" />
+        <div key={section} className="group rounded-[28px] border border-white/80 bg-white/50 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-all duration-300 hover:bg-white/65 sm:rounded-[40px] sm:p-8">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm transition-transform group-hover:scale-105">
+                <FolderOpen className="h-6 w-6" />
               </span>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Secao</p>
-                <h3 className="text-lg font-semibold tracking-[-0.03em] text-slate-950">{section}</h3>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Diretório</p>
+                <h3 className="text-xl font-bold tracking-tight text-slate-950">{section}</h3>
               </div>
             </div>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-white/50 backdrop-blur-sm px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               {grouped[section].length} arquivo(s)
             </span>
           </div>
