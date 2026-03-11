@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { taskSchema, type TaskInput } from '@/lib/validations'
 import { triggerN8nEvent } from '@/lib/n8n'
 import type { TaskStatus } from '@/types'
@@ -18,15 +18,28 @@ function buildTaskPatch(data: Partial<TaskInput>) {
   }
 }
 
-export async function createTask(projectId: string, data: TaskInput) {
+async function requireUser() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { supabase, user: null, role: null }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  return { supabase, user, role: profile?.role ?? null }
+}
+
+export async function createTask(projectId: string, data: TaskInput) {
+  const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
 
   const parsed = taskSchema.safeParse(data)
   if (!parsed.success) return { error: 'Dados invalidos' }
 
-  const { error } = await supabase.from('tasks').insert({
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from('tasks').insert({
     ...parsed.data,
     blocked_since: parsed.data.blocked_reason ? new Date().toISOString() : null,
     project_id: projectId,
@@ -41,12 +54,12 @@ export async function createTask(projectId: string, data: TaskInput) {
 }
 
 export async function updateTaskStatus(taskId: string, status: TaskStatus, projectId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
 
   const updatePayload = buildTaskPatch({ status })
-  const { error } = await supabase
+  const mutationClient = role === 'admin' ? createAdminClient() : supabase
+  const { error } = await mutationClient
     .from('tasks')
     .update(updatePayload)
     .eq('id', taskId)
@@ -66,11 +79,11 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus, proje
 }
 
 export async function updateTask(taskId: string, data: Partial<TaskInput>, projectId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
 
-  const { error } = await supabase
+  const mutationClient = role === 'admin' ? createAdminClient() : supabase
+  const { error } = await mutationClient
     .from('tasks')
     .update(buildTaskPatch(data))
     .eq('id', taskId)
@@ -106,9 +119,9 @@ export async function createTasksBulk({
   assigneeIds: string[]
   hasClientAssignee: boolean
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
 
   const base = {
     project_id: projectId,
@@ -121,7 +134,7 @@ export async function createTasksBulk({
   }
 
   if (assigneeIds.length === 0) {
-    const { error } = await supabase.from('tasks').insert({
+    const { error } = await createAdminClient().from('tasks').insert({
       ...base,
       owner_type: 'agency' as const,
     })
@@ -143,7 +156,7 @@ export async function createTasksBulk({
       owner_type: (clientUserIds.has(assigneeId) || hasClientAssignee ? 'client' : 'agency') as 'client' | 'agency',
     }))
 
-    const { error } = await supabase.from('tasks').insert(rows)
+    const { error } = await createAdminClient().from('tasks').insert(rows)
     if (error) return { error: error.message }
   }
 
@@ -241,17 +254,9 @@ export async function createTasksFromAI(
     due_date: string | null
   }>
 ) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || profile.role !== 'admin') return { error: 'Acesso negado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
   if (tasks.length === 0) return { error: 'Nenhuma tarefa para criar' }
 
   const rows = tasks.map((task) => ({
@@ -265,7 +270,7 @@ export async function createTasksFromAI(
     created_by: user.id,
   }))
 
-  const { error } = await supabase.from('tasks').insert(rows)
+  const { error } = await createAdminClient().from('tasks').insert(rows)
   if (error) return { error: error.message }
 
   revalidatePath(`/projects/${projectId}/tasks`)
@@ -274,19 +279,11 @@ export async function createTasksFromAI(
 }
 
 export async function getTasksForExport(projectId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || profile.role !== 'admin') return { error: 'Acesso negado' }
-
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .from('tasks')
     .select('*, assignee:profiles!tasks_assignee_id_fkey(full_name)')
     .eq('project_id', projectId)
@@ -297,11 +294,11 @@ export async function getTasksForExport(projectId: string) {
 }
 
 export async function deleteTask(taskId: string, projectId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
 
-  const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+  const { error } = await createAdminClient().from('tasks').delete().eq('id', taskId)
   if (error) return { error: error.message }
 
   revalidatePath(`/projects/${projectId}/tasks`)

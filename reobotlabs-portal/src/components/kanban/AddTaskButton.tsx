@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { taskSchema, type TaskInput } from '@/lib/validations'
 import { createTask } from '@/actions/tasks'
 import { Button } from '@/components/ui/button'
@@ -44,7 +45,10 @@ export function AddTaskButton({ projectId }: AddTaskButtonProps) {
   async function onSubmit(data: TaskInput) {
     setIsLoading(true)
     const result = await createTask(projectId, data)
-    if (!result?.error) {
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('Tarefa criada com sucesso')
       reset()
       setOpen(false)
     }
