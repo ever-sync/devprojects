@@ -172,18 +172,23 @@ export type AIGeneratedTask = {
   estimated_days: number | null
 }
 
+function getAnthropicModels() {
+  return [...new Set([
+    process.env.ANTHROPIC_MODEL,
+    'claude-3-5-haiku-latest',
+    'claude-3-5-sonnet-latest',
+  ].filter(Boolean))] as string[]
+}
+
+function extractJsonPayload(raw: string) {
+  const fencedMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  return (fencedMatch?.[1] ?? raw).trim()
+}
+
 export async function generateTasksFromText(text: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, role } = await requireUser()
   if (!user) return { error: 'Nao autenticado' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || profile.role !== 'admin') return { error: 'Acesso negado' }
+  if (role !== 'admin') return { error: 'Acesso negado' }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return { error: 'Chave da API de IA nao configurada' }
@@ -211,38 +216,67 @@ Regras:
 TEXTO:
 ${text}`
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
+  const models = getAnthropicModels()
+  let lastError = 'Nao foi possivel gerar tarefas com IA.'
 
-  if (!response.ok) {
-    const err = await response.text()
-    return { error: `Erro na API de IA: ${err}` }
+  for (const model of models) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      const err = await response.text()
+      lastError = `Erro na API de IA: ${err}`
+
+      if (
+        err.includes('model') ||
+        err.includes('not_found_error') ||
+        err.includes('invalid_request_error')
+      ) {
+        continue
+      }
+
+      return { error: lastError }
+    }
+
+    const result = await response.json() as {
+      content: Array<{ type: string; text?: string }>
+    }
+
+    const raw = result.content
+      ?.filter((item) => item.type === 'text' && typeof item.text === 'string')
+      .map((item) => item.text ?? '')
+      .join('\n')
+      .trim()
+
+    if (!raw) {
+      lastError = 'A IA nao retornou texto utilizavel.'
+      continue
+    }
+
+    try {
+      const parsed = JSON.parse(extractJsonPayload(raw)) as { tasks: AIGeneratedTask[] }
+      if (!Array.isArray(parsed.tasks)) {
+        lastError = 'Resposta invalida da IA'
+        continue
+      }
+      return { success: true, tasks: parsed.tasks.slice(0, 20) }
+    } catch {
+      lastError = 'Nao foi possivel interpretar a resposta da IA. Tente novamente.'
+    }
   }
 
-  const result = await response.json() as {
-    content: Array<{ type: string; text: string }>
-  }
-
-  const raw = result.content?.[0]?.text ?? ''
-
-  try {
-    const parsed = JSON.parse(raw) as { tasks: AIGeneratedTask[] }
-    if (!Array.isArray(parsed.tasks)) return { error: 'Resposta invalida da IA' }
-    return { success: true, tasks: parsed.tasks.slice(0, 20) }
-  } catch {
-    return { error: 'Nao foi possivel interpretar a resposta da IA. Tente novamente.' }
-  }
+  return { error: lastError }
 }
 
 export async function createTasksFromAI(
