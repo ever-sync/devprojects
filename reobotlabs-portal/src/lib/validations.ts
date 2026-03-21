@@ -202,6 +202,71 @@ export const invoiceSchema = z.object({
   notes: z.string().max(2000).optional().nullable(),
 })
 
+// Git Integration schemas
+export const gitIntegrationSchema = z.object({
+  workspaceId: z.string().uuid(),
+  provider: z.enum(['github', 'gitlab', 'bitbucket']),
+  name: z.string().min(1).max(100),
+  oauthToken: z.string().min(1),
+  refreshToken: z.string().optional(),
+  tokenExpiresAt: z.string().datetime().optional(),
+})
+
+export const repositorySchema = z.object({
+  projectId: z.string().uuid(),
+  integrationId: z.string().uuid(),
+  providerRepoId: z.string(),
+  repoName: z.string(),
+  repoUrl: z.string().url(),
+  defaultBranch: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+  autoLinkBranches: z.boolean().optional(),
+  autoLinkPrs: z.boolean().optional(),
+  autoLinkCommits: z.boolean().optional(),
+})
+
+export const commitSchema = z.object({
+  projectId: z.string().uuid(),
+  repositoryId: z.string().uuid(),
+  taskId: z.string().uuid().optional(),
+  commitSha: z.string(),
+  commitMessage: z.string(),
+  commitUrl: z.string().url(),
+  authorName: z.string().optional(),
+  authorEmail: z.string().email().optional(),
+  authorAvatar: z.string().url().optional(),
+  committedAt: z.string(),
+  filesChanged: z.number().int().min(0).optional(),
+  additions: z.number().int().min(0).optional(),
+  deletions: z.number().int().min(0).optional(),
+})
+
+export const deploymentSchema = z.object({
+  projectId: z.string().uuid(),
+  repositoryId: z.string().uuid().optional(),
+  environment: z.enum(['development', 'staging', 'production', 'preview']),
+  deploymentUrl: z.string().url().optional(),
+  status: z.enum(['pending', 'building', 'success', 'failure', 'cancelled']),
+  commitSha: z.string().optional(),
+  branchName: z.string().optional(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
+  durationSeconds: z.number().int().min(0).optional(),
+  logsUrl: z.string().url().optional(),
+  errorMessage: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
+})
+
+export const branchLinkSchema = z.object({
+  taskId: z.string().uuid(),
+  repositoryId: z.string().uuid(),
+  branchName: z.string(),
+  prNumber: z.number().int().positive().optional(),
+  prUrl: z.string().url().optional(),
+  prStatus: z.enum(['open', 'closed', 'merged', 'draft']).optional(),
+  prTitle: z.string().optional(),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 export type ProjectInput = z.infer<typeof projectSchema>
@@ -223,3 +288,9 @@ export type TeamCapacityInput = z.infer<typeof teamCapacitySchema>
 export type ContractInput = z.infer<typeof contractSchema>
 export type BillingMilestoneInput = z.infer<typeof billingMilestoneSchema>
 export type InvoiceInput = z.infer<typeof invoiceSchema>
+// Git Integration types
+export type GitIntegrationInput = z.infer<typeof gitIntegrationSchema>
+export type RepositoryInput = z.infer<typeof repositorySchema>
+export type CommitInput = z.infer<typeof commitSchema>
+export type DeploymentInput = z.infer<typeof deploymentSchema>
+export type BranchLinkInput = z.infer<typeof branchLinkSchema>
