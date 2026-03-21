@@ -64,7 +64,7 @@ export function ProjectRepositories({ projectId }: ProjectRepositoriesProps) {
     setLoading(true)
     const result = await listProjectRepositories(projectId)
     if (result.repositories) {
-      setRepositories(result.repositories)
+      setRepositories(result.repositories as Repository[])
     }
     setLoading(false)
   }

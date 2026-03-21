@@ -1,1 +1,2 @@
-export { ProposalBuilder } from './proposal-builder';
+// Proposals components exports
+export { ProposalsList } from './proposals-list';

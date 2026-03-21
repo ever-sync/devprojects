@@ -41,7 +41,7 @@ export async function createGitIntegration(data: z.infer<typeof gitIntegrationSc
 
   const parsed = gitIntegrationSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar se usuário é admin do workspace
@@ -222,7 +222,7 @@ export async function addRepositoryToProject(data: z.infer<typeof repositorySche
 
   const parsed = repositorySchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar se usuário tem acesso ao projeto
@@ -321,10 +321,13 @@ export async function removeRepositoryFromProject(repositoryId: string, projectI
     return { error: 'Não autenticado' }
   }
 
+  const { data: project } = await supabase.from('projects').select('workspace_id').eq('id', projectId).single()
+  if (!project) return { error: 'Projeto não encontrado' }
+
   const { data: membership } = await supabase
     .from('workspace_members')
     .select('role')
-    .eq('workspace_id', (await supabase.from('projects').select('workspace_id').eq('id', projectId).single()).data?.workspace_id)
+    .eq('workspace_id', project.workspace_id)
     .eq('user_id', user.id)
     .single()
 
@@ -391,9 +394,9 @@ export async function registerCommit(data: {
 
   // Se associado a uma tarefa, atualizar contagem de commits
   if (data.taskId) {
-    await supabase.rpc('increment_task_commits_count', { 
-      task_id: data.taskId 
-    }).catch(() => {}) // Ignorar se a RPC não existir
+    try {
+      await supabase.rpc('increment_task_commits_count', { task_id: data.taskId })
+    } catch { /* Ignorar se a RPC não existir */ }
   }
 
   revalidatePath(`/projects/${data.projectId}`)
@@ -481,7 +484,7 @@ export async function registerDeployment(data: {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { deployment, error } = await supabase
+  const { data: deployment, error } = await supabase
     .from('project_deployments')
     .insert({
       project_id: data.projectId,

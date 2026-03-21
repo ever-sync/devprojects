@@ -48,8 +48,8 @@ Pasta: `src/components/workflows/`
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `supabase/migrations/037_workflow_engine.sql` | Schema + templates + função |
-| `supabase/migrations/038_workflow_rls_policies.sql` | Políticas RLS completas |
+| `supabase/migrations/043_workflow_engine.sql` | Schema + templates + função |
+| `supabase/migrations/044_workflow_rls_policies.sql` | Políticas RLS completas |
 | `src/actions/workflow-engine.ts` | 12 Server Actions |
 | `src/components/workflows/workflows-list.tsx` | Componente WorkflowsList |
 | `src/components/workflows/webhooks-list.tsx` | Componente WebhooksList |

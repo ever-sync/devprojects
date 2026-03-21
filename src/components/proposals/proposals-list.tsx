@@ -38,14 +38,20 @@ import {
 interface Proposal {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   status: string;
   total_value: number;
   currency: string;
   created_at: string;
-  valid_until?: string;
-  client?: { name: string } | null;
-  converted_project?: { id: string; name: string } | null;
+  valid_until?: string | null;
+  client?: { id: string; name: string } | null;
+  converted_to_project_id?: string | null;
+  workspace_id?: string;
+  created_by?: string;
+  updated_at?: string;
+  template_data?: unknown;
+  custom_fields?: unknown;
+  version?: number;
 }
 
 interface ProposalsListProps {
@@ -132,7 +138,7 @@ export function ProposalsList({ proposals, workspaceId }: ProposalsListProps) {
                   <Badge className={getStatusColor(proposal.status)}>
                     {getStatusLabel(proposal.status)}
                   </Badge>
-                  {proposal.converted_project && (
+                  {proposal.converted_to_project_id && (
                     <Badge variant="outline" className="bg-green-50 text-green-700">
                       Projeto Criado
                     </Badge>
@@ -169,7 +175,7 @@ export function ProposalsList({ proposals, workspaceId }: ProposalsListProps) {
                   >
                     Ver Detalhes
                   </Button>
-                  {proposal.status === 'accepted' && !proposal.converted_project && (
+                  {proposal.status === 'accepted' && !proposal.converted_to_project_id && (
                     <Button
                       size="sm"
                       className="flex-1 bg-green-600 hover:bg-green-700"

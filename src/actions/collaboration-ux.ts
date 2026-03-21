@@ -51,6 +51,7 @@ export const offlineSyncSchema = z.object({
 })
 
 export const activityLogSchema = z.object({
+  workspaceId: z.string().uuid(),
   actionType: z.string(),
   entityType: z.string(),
   entityId: z.string().uuid().optional(),
@@ -208,18 +209,7 @@ export async function getCommentThreads(taskId?: string, documentId?: string) {
     
     let query = supabase
       .from('task_comment_threads')
-      .select(`
-        *,
-        author:author_id (id, email, raw_user_meta_data),
-        resolver:resolved_by (id, email, raw_user_meta_data),
-        replies:task_comment_threads (
-          *,
-          author:author_id (id, email, raw_user_meta_data)
-        ),
-        mentions:comment_mentions (
-          mentioned_user:mentioned_user_id (id, email, raw_user_meta_data)
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: true })
 
     if (taskId) {
@@ -232,7 +222,7 @@ export async function getCommentThreads(taskId?: string, documentId?: string) {
 
     if (error) throw error
 
-    return { success: true, data }
+    return { success: true, data: data as unknown[] }
   } catch (error) {
     console.error('Error fetching comment threads:', error)
     return { error: 'Failed to fetch comments' }
@@ -373,7 +363,7 @@ export async function getUserUIPreferences() {
 
     if (error && error.code !== 'PGRST116') throw error
 
-    return { success: true, data: data || {} }
+    return { success: true, data: data ?? null }
   } catch (error) {
     console.error('Error fetching UI preferences:', error)
     return { error: 'Failed to fetch preferences' }
@@ -431,7 +421,7 @@ export async function addToOfflineSyncQueue(input: OfflineSyncInput) {
         operation_type: validated.operationType,
         entity_type: validated.entityType,
         entity_id: validated.entityId,
-        payload: validated.payload
+        payload: validated.payload as unknown as import('@/types/database.types').Json
       })
       .select()
       .single()
@@ -495,12 +485,19 @@ export async function markSyncOperationFailed(operationId: string, errorMessage:
   try {
     const supabase = await createClient()
     
+    // First get current retry_count, then increment
+    const { data: current } = await supabase
+      .from('offline_sync_queue')
+      .select('retry_count')
+      .eq('id', operationId)
+      .single()
+
     const { error } = await supabase
       .from('offline_sync_queue')
-      .update({ 
+      .update({
         status: 'failed',
         error_message: errorMessage,
-        retry_count: supabase.raw('retry_count + 1')
+        retry_count: (current?.retry_count ?? 0) + 1
       })
       .eq('id', operationId)
 
@@ -530,12 +527,12 @@ export async function logUserActivity(input: ActivityLogInput) {
       .from('user_activity_log')
       .insert({
         user_id: user.id,
-        workspace_id: input.workspaceId,
+        workspace_id: validated.workspaceId,
         action_type: validated.actionType,
         entity_type: validated.entityType,
         entity_id: validated.entityId,
-        previous_state: validated.previousState,
-        new_state: validated.newState,
+        previous_state: validated.previousState as unknown as import('@/types/database.types').Json,
+        new_state: validated.newState as unknown as import('@/types/database.types').Json,
         can_undo: validated.canUndo
       })
       .select()

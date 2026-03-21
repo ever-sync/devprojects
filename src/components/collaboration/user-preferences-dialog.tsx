@@ -84,14 +84,15 @@ export function UserPreferencesDialog() {
     }
 
     if (prefsResult.success && prefsResult.data) {
+      const prefs = prefsResult.data
       setPreferences({
-        theme: prefsResult.data.theme || 'system',
-        compactMode: prefsResult.data.compact_mode || false,
-        fontSize: prefsResult.data.font_size || 'medium',
-        sidebarCollapsed: prefsResult.data.sidebar_collapsed || false,
-        defaultView: prefsResult.data.default_view || 'kanban',
-        timezone: prefsResult.data.timezone || 'UTC',
-        dateFormat: prefsResult.data.date_format || 'DD/MM/YYYY',
+        theme: (prefs.theme as 'light' | 'dark' | 'system') || 'system',
+        compactMode: prefs.compact_mode || false,
+        fontSize: (prefs.font_size as 'small' | 'medium' | 'large') || 'medium',
+        sidebarCollapsed: prefs.sidebar_collapsed || false,
+        defaultView: prefs.default_view || 'kanban',
+        timezone: prefs.timezone || 'UTC',
+        dateFormat: prefs.date_format || 'DD/MM/YYYY',
       })
     }
     

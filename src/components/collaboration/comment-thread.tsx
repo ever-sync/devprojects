@@ -30,7 +30,14 @@ interface Comment {
   updated_at: string
   edited: boolean
   resolved: boolean
-  author: {
+  parent_comment_id?: string | null
+  task_id?: string | null
+  document_id?: string | null
+  workspace_id?: string
+  author_id?: string | null
+  resolved_by?: string | null
+  resolved_at?: string | null
+  author?: {
     id: string
     email: string
     raw_user_meta_data?: {
@@ -74,7 +81,8 @@ export function CommentThread({ taskId, documentId, workspaceId }: CommentThread
     const result = await getCommentThreads(taskId, documentId)
     if (result.success && result.data) {
       // Filter only top-level comments (no parent)
-      const topLevelComments = result.data.filter((c: Comment) => !c.parent_comment_id)
+      const allComments = result.data as Comment[]
+      const topLevelComments = allComments.filter((c) => !c.parent_comment_id)
       setComments(topLevelComments)
     }
     setLoading(false)
@@ -193,6 +201,7 @@ export function CommentThread({ taskId, documentId, workspaceId }: CommentThread
                 setEditContent('')
               }}
               onSubmitReply={() => handleCreateComment(comment.id)}
+              onCancelReply={() => setReplyingTo(null)}
             />
           ))}
         </div>
@@ -214,6 +223,7 @@ interface CommentItemProps {
   onSaveEdit: () => void
   onCancelEdit: () => void
   onSubmitReply: () => void
+  onCancelReply: () => void
 }
 
 function CommentItem({
@@ -229,6 +239,7 @@ function CommentItem({
   onSaveEdit,
   onCancelEdit,
   onSubmitReply,
+  onCancelReply,
 }: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(false)
   const [replyContent, setReplyContent] = useState('')
@@ -345,7 +356,7 @@ function CommentItem({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setReplyingTo(null)}
+                onClick={onCancelReply}
               >
                 Cancelar
               </Button>
@@ -382,6 +393,7 @@ function CommentItem({
                     onSaveEdit={() => {}}
                     onCancelEdit={() => {}}
                     onSubmitReply={() => {}}
+                    onCancelReply={() => {}}
                   />
                 ))}
               </div>

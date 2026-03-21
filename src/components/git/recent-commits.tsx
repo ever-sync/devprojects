@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { GitCommit, GitBranch, GitMerge, ExternalLink, Clock, FileChanged, Plus, Minus } from 'lucide-react'
+import { GitCommit, GitBranch, GitMerge, ExternalLink, Clock, FileCode, Plus, Minus } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { listCommits } from '@/actions/git-integrations'
@@ -56,7 +56,7 @@ export function RecentCommits({ projectId, taskId, limit = 10 }: RecentCommitsPr
       limit,
     })
     if (result.commits) {
-      setCommits(result.commits)
+      setCommits(result.commits as Commit[])
     }
     setLoading(false)
   }
@@ -157,7 +157,7 @@ export function RecentCommits({ projectId, taskId, limit = 10 }: RecentCommitsPr
                       {commit.files_changed !== null && commit.files_changed > 0 && (
                         <>
                           <span className="flex items-center gap-1">
-                            <FileChanged className="h-3 w-3" />
+                            <FileCode className="h-3 w-3" />
                             {commit.files_changed} arquivos
                           </span>
                           {commit.additions !== null && commit.additions > 0 && (

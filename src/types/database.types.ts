@@ -424,6 +424,8 @@ export type Database = {
           scope_document_id: string | null
           scope_version_current_id: string | null
           workspace_id: string
+          converted_from_proposal_id: string | null
+          proposal_accepted_at: string | null
         }
         Insert: {
           id?: string
@@ -455,6 +457,8 @@ export type Database = {
           scope_document_id?: string | null
           scope_version_current_id?: string | null
           workspace_id: string
+          converted_from_proposal_id?: string | null
+          proposal_accepted_at?: string | null
         }
         Update: {
           name?: string
@@ -482,6 +486,8 @@ export type Database = {
           scope_document_id?: string | null
           scope_version_current_id?: string | null
           workspace_id?: string
+          converted_from_proposal_id?: string | null
+          proposal_accepted_at?: string | null
         }
         Relationships: [
           {
@@ -1756,6 +1762,780 @@ export type Database = {
           }
         ]
       }
+      // ==================== Git Integration Tables ====================
+      git_integrations: {
+        Row: {
+          id: string
+          workspace_id: string
+          provider: string
+          name: string
+          oauth_token: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          webhook_secret: string | null
+          webhook_url: string | null
+          is_active: boolean
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          provider: string
+          name: string
+          oauth_token: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          webhook_secret?: string | null
+          webhook_url?: string | null
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          workspace_id?: string
+          provider?: string
+          name?: string
+          oauth_token?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          webhook_secret?: string | null
+          webhook_url?: string | null
+          is_active?: boolean
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      project_repositories: {
+        Row: {
+          id: string
+          project_id: string
+          integration_id: string
+          provider_repo_id: string
+          repo_name: string
+          repo_url: string
+          default_branch: string
+          is_primary: boolean
+          auto_link_branches: boolean
+          auto_link_prs: boolean
+          auto_link_commits: boolean
+          last_synced_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          integration_id: string
+          provider_repo_id: string
+          repo_name: string
+          repo_url: string
+          default_branch?: string
+          is_primary?: boolean
+          auto_link_branches?: boolean
+          auto_link_prs?: boolean
+          auto_link_commits?: boolean
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          project_id?: string
+          integration_id?: string
+          provider_repo_id?: string
+          repo_name?: string
+          repo_url?: string
+          default_branch?: string
+          is_primary?: boolean
+          auto_link_branches?: boolean
+          auto_link_prs?: boolean
+          auto_link_commits?: boolean
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_branches: {
+        Row: {
+          id: string
+          task_id: string
+          repository_id: string
+          branch_name: string
+          provider_branch_id: string | null
+          pr_number: number | null
+          pr_url: string | null
+          pr_status: string | null
+          pr_title: string | null
+          commits_count: number
+          last_commit_at: string | null
+          last_commit_sha: string | null
+          is_merged: boolean
+          merged_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          repository_id: string
+          branch_name: string
+          provider_branch_id?: string | null
+          pr_number?: number | null
+          pr_url?: string | null
+          pr_status?: string | null
+          pr_title?: string | null
+          commits_count?: number
+          last_commit_at?: string | null
+          last_commit_sha?: string | null
+          is_merged?: boolean
+          merged_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          task_id?: string
+          repository_id?: string
+          branch_name?: string
+          provider_branch_id?: string | null
+          pr_number?: number | null
+          pr_url?: string | null
+          pr_status?: string | null
+          pr_title?: string | null
+          commits_count?: number
+          last_commit_at?: string | null
+          last_commit_sha?: string | null
+          is_merged?: boolean
+          merged_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_commits: {
+        Row: {
+          id: string
+          task_id: string | null
+          project_id: string
+          repository_id: string
+          commit_sha: string
+          commit_message: string
+          commit_url: string
+          author_name: string | null
+          author_email: string | null
+          author_avatar: string | null
+          committed_at: string
+          files_changed: number
+          additions: number
+          deletions: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id?: string | null
+          project_id: string
+          repository_id: string
+          commit_sha: string
+          commit_message: string
+          commit_url: string
+          author_name?: string | null
+          author_email?: string | null
+          author_avatar?: string | null
+          committed_at: string
+          files_changed?: number
+          additions?: number
+          deletions?: number
+          created_at?: string
+        }
+        Update: {
+          task_id?: string | null
+          project_id?: string
+          repository_id?: string
+          commit_sha?: string
+          commit_message?: string
+          commit_url?: string
+          author_name?: string | null
+          author_email?: string | null
+          author_avatar?: string | null
+          committed_at?: string
+          files_changed?: number
+          additions?: number
+          deletions?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      project_deployments: {
+        Row: {
+          id: string
+          project_id: string
+          repository_id: string | null
+          environment: string
+          deployment_url: string | null
+          status: string
+          commit_sha: string | null
+          branch_name: string | null
+          deployed_by: string | null
+          started_at: string | null
+          completed_at: string | null
+          duration_seconds: number | null
+          logs_url: string | null
+          error_message: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          repository_id?: string | null
+          environment: string
+          deployment_url?: string | null
+          status: string
+          commit_sha?: string | null
+          branch_name?: string | null
+          deployed_by?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_seconds?: number | null
+          logs_url?: string | null
+          error_message?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          project_id?: string
+          repository_id?: string | null
+          environment?: string
+          deployment_url?: string | null
+          status?: string
+          commit_sha?: string | null
+          branch_name?: string | null
+          deployed_by?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_seconds?: number | null
+          logs_url?: string | null
+          error_message?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      git_activities: {
+        Row: {
+          id: string
+          workspace_id: string
+          project_id: string | null
+          integration_id: string | null
+          repository_id: string | null
+          activity_type: string
+          actor_name: string | null
+          actor_avatar: string | null
+          action: string
+          description: string | null
+          payload: Json
+          occurred_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          project_id?: string | null
+          integration_id?: string | null
+          repository_id?: string | null
+          activity_type: string
+          actor_name?: string | null
+          actor_avatar?: string | null
+          action: string
+          description?: string | null
+          payload?: Json
+          occurred_at?: string
+          created_at?: string
+        }
+        Update: {
+          workspace_id?: string
+          project_id?: string | null
+          integration_id?: string | null
+          repository_id?: string | null
+          activity_type?: string
+          actor_name?: string | null
+          actor_avatar?: string | null
+          action?: string
+          description?: string | null
+          payload?: Json
+          occurred_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      // ==================== Collaboration UX Tables ====================
+      task_comment_threads: {
+        Row: {
+          id: string
+          task_id: string | null
+          document_id: string | null
+          parent_comment_id: string | null
+          workspace_id: string
+          author_id: string | null
+          content: string
+          resolved: boolean
+          resolved_by: string | null
+          resolved_at: string | null
+          edited: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          task_id?: string | null
+          document_id?: string | null
+          parent_comment_id?: string | null
+          workspace_id: string
+          author_id?: string | null
+          content: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          edited?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          task_id?: string | null
+          document_id?: string | null
+          parent_comment_id?: string | null
+          workspace_id?: string
+          author_id?: string | null
+          content?: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          edited?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      comment_mentions: {
+        Row: {
+          id: string
+          comment_id: string | null
+          mentioned_user_id: string
+          mentioned_by: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comment_id?: string | null
+          mentioned_user_id: string
+          mentioned_by?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          mentioned_user_id?: string
+          mentioned_by?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_keyboard_shortcuts: {
+        Row: {
+          id: string
+          user_id: string
+          shortcuts: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          shortcuts?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          shortcuts?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      offline_sync_queue: {
+        Row: {
+          id: string
+          user_id: string
+          operation_type: string
+          entity_type: string
+          entity_id: string | null
+          payload: Json
+          status: string
+          retry_count: number
+          error_message: string | null
+          created_at: string
+          synced_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          operation_type: string
+          entity_type: string
+          entity_id?: string | null
+          payload: Json
+          status?: string
+          retry_count?: number
+          error_message?: string | null
+          created_at?: string
+          synced_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          operation_type?: string
+          entity_type?: string
+          entity_id?: string | null
+          payload?: Json
+          status?: string
+          retry_count?: number
+          error_message?: string | null
+          created_at?: string
+          synced_at?: string | null
+        }
+        Relationships: []
+      }
+      user_ui_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          theme: string
+          compact_mode: boolean
+          font_size: string
+          sidebar_collapsed: boolean
+          default_view: string
+          timezone: string
+          date_format: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          theme?: string
+          compact_mode?: boolean
+          font_size?: string
+          sidebar_collapsed?: boolean
+          default_view?: string
+          timezone?: string
+          date_format?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          theme?: string
+          compact_mode?: boolean
+          font_size?: string
+          sidebar_collapsed?: boolean
+          default_view?: string
+          timezone?: string
+          date_format?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_activity_log: {
+        Row: {
+          id: string
+          user_id: string
+          workspace_id: string
+          action_type: string
+          entity_type: string
+          entity_id: string | null
+          previous_state: Json | null
+          new_state: Json | null
+          can_undo: boolean
+          undone: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          workspace_id: string
+          action_type: string
+          entity_type: string
+          entity_id?: string | null
+          previous_state?: Json | null
+          new_state?: Json | null
+          can_undo?: boolean
+          undone?: boolean
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          workspace_id?: string
+          action_type?: string
+          entity_type?: string
+          entity_id?: string | null
+          previous_state?: Json | null
+          new_state?: Json | null
+          can_undo?: boolean
+          undone?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      // ==================== Proposals Tables ====================
+      proposals: {
+        Row: {
+          id: string
+          workspace_id: string
+          client_id: string | null
+          title: string
+          description: string | null
+          status: string
+          total_value: number
+          currency: string
+          valid_until: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+          converted_to_project_id: string | null
+          template_data: Json
+          custom_fields: Json
+          version: number
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          client_id?: string | null
+          title: string
+          description?: string | null
+          status?: string
+          total_value?: number
+          currency?: string
+          valid_until?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+          converted_to_project_id?: string | null
+          template_data?: Json
+          custom_fields?: Json
+          version?: number
+        }
+        Update: {
+          workspace_id?: string
+          client_id?: string | null
+          title?: string
+          description?: string | null
+          status?: string
+          total_value?: number
+          currency?: string
+          valid_until?: string | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+          converted_to_project_id?: string | null
+          template_data?: Json
+          custom_fields?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_converted_to_project_id_fkey"
+            columns: ["converted_to_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      proposal_phases: {
+        Row: {
+          id: string
+          proposal_id: string
+          phase_number: number
+          title: string
+          description: string | null
+          deliverables: string[]
+          estimated_hours: number
+          start_date_offset: number
+          duration_days: number
+          value: number
+          milestone: boolean
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          phase_number: number
+          title: string
+          description?: string | null
+          deliverables?: string[]
+          estimated_hours?: number
+          start_date_offset?: number
+          duration_days?: number
+          value?: number
+          milestone?: boolean
+          sort_order?: number
+        }
+        Update: {
+          proposal_id?: string
+          phase_number?: number
+          title?: string
+          description?: string | null
+          deliverables?: string[]
+          estimated_hours?: number
+          start_date_offset?: number
+          duration_days?: number
+          value?: number
+          milestone?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      proposal_timeline: {
+        Row: {
+          id: string
+          proposal_id: string
+          event_name: string
+          event_type: string
+          scheduled_date_offset: number
+          description: string | null
+          responsible_role: string | null
+          completed: boolean
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          event_name: string
+          event_type: string
+          scheduled_date_offset: number
+          description?: string | null
+          responsible_role?: string | null
+          completed?: boolean
+          sort_order?: number
+        }
+        Update: {
+          proposal_id?: string
+          event_name?: string
+          event_type?: string
+          scheduled_date_offset?: number
+          description?: string | null
+          responsible_role?: string | null
+          completed?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      proposal_resources: {
+        Row: {
+          id: string
+          proposal_id: string
+          resource_type: string
+          role_name: string
+          allocated_hours: number
+          hourly_rate: number | null
+          total_cost: number | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          resource_type: string
+          role_name: string
+          allocated_hours?: number
+          hourly_rate?: number | null
+          total_cost?: number | null
+          notes?: string | null
+        }
+        Update: {
+          proposal_id?: string
+          resource_type?: string
+          role_name?: string
+          allocated_hours?: number
+          hourly_rate?: number | null
+          total_cost?: number | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      proposal_terms: {
+        Row: {
+          id: string
+          proposal_id: string
+          term_type: string
+          title: string
+          content: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          term_type: string
+          title: string
+          content: string
+          sort_order?: number
+        }
+        Update: {
+          proposal_id?: string
+          term_type?: string
+          title?: string
+          content?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      proposal_documents: {
+        Row: {
+          id: string
+          proposal_id: string
+          document_name: string
+          document_type: string
+          file_path: string | null
+          file_size: number | null
+          uploaded_at: string
+          generated_html: string | null
+          is_scope_document: boolean
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          document_name: string
+          document_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          uploaded_at?: string
+          generated_html?: string | null
+          is_scope_document?: boolean
+        }
+        Update: {
+          proposal_id?: string
+          document_name?: string
+          document_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          uploaded_at?: string
+          generated_html?: string | null
+          is_scope_document?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1768,6 +2548,18 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      increment_task_comment_count: {
+        Args: { task_id: string }
+        Returns: void
+      }
+      decrement_task_comment_count: {
+        Args: { task_id: string }
+        Returns: void
+      }
+      increment_task_commits_count: {
+        Args: { task_id: string }
+        Returns: void
       }
     }
     Enums: {

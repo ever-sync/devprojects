@@ -24,9 +24,9 @@ interface Deployment {
   id: string
   project_id: string
   repository_id: string | null
-  environment: 'development' | 'staging' | 'production' | 'preview'
+  environment: string
   deployment_url: string | null
-  status: 'pending' | 'building' | 'success' | 'failure' | 'cancelled'
+  status: string
   commit_sha: string | null
   branch_name: string | null
   deployed_by: string | null
@@ -37,10 +37,11 @@ interface Deployment {
   error_message: string | null
   metadata: Record<string, any>
   created_at: string
-  profiles: {
+  profiles?: {
     full_name: string | null
     avatar_url: string | null
   } | null
+  [key: string]: unknown
 }
 
 interface DeploymentsListProps {
@@ -60,7 +61,7 @@ export function DeploymentsList({ projectId, limit = 10 }: DeploymentsListProps)
     setLoading(true)
     const result = await listDeployments(projectId, limit)
     if (result.deployments) {
-      setDeployments(result.deployments)
+      setDeployments(result.deployments as Deployment[])
     }
     setLoading(false)
   }
@@ -82,8 +83,8 @@ export function DeploymentsList({ projectId, limit = 10 }: DeploymentsListProps)
     }
   }
 
-  function getStatusLabel(status: Deployment['status']) {
-    const labels = {
+  function getStatusLabel(status: string) {
+    const labels: Record<string, string> = {
       pending: 'Pendente',
       building: 'Construindo',
       success: 'Sucesso',
@@ -93,18 +94,18 @@ export function DeploymentsList({ projectId, limit = 10 }: DeploymentsListProps)
     return labels[status] || status
   }
 
-  function getEnvironmentBadgeVariant(env: Deployment['environment']) {
-    const variants = {
+  function getEnvironmentBadgeVariant(env: string) {
+    const variants: Record<string, string> = {
       development: 'secondary',
       staging: 'default',
       production: 'destructive',
       preview: 'outline',
     }
-    return variants[env] || 'outline' as const
+    return (variants[env] || 'outline') as 'default' | 'destructive' | 'outline' | 'secondary'
   }
 
-  function getEnvironmentLabel(env: Deployment['environment']) {
-    const labels = {
+  function getEnvironmentLabel(env: string) {
+    const labels: Record<string, string> = {
       development: 'Desenvolvimento',
       staging: 'Staging',
       production: 'Produção',
