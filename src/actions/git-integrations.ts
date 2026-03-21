@@ -588,7 +588,7 @@ export async function linkBranchToTask(data: {
     return { error: error.message }
   }
 
-  revalidatePath(`/projects/(id)/tasks`)
+  revalidatePath('/projects/[id]/tasks', 'page')
   
   return { success: true, branch }
 }

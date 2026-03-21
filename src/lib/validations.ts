@@ -254,7 +254,7 @@ export const deploymentSchema = z.object({
   durationSeconds: z.number().int().min(0).optional(),
   logsUrl: z.string().url().optional(),
   errorMessage: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 })
 
 export const branchLinkSchema = z.object({

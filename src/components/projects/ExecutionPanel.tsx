@@ -3,7 +3,8 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { AlertTriangle, GitBranch, Users } from 'lucide-react'
+import { AlertTriangle, GitBranch as GitBranchIcon, Users } from 'lucide-react'
+import { ProjectRepositories, RecentCommits, DeploymentsList } from '@/components/git'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import {
 
 interface ExecutionPanelProps {
   projectId: string
+  workspaceId?: string
   tasks: Array<{
     id: string
     title: string
@@ -58,6 +60,7 @@ interface ExecutionPanelProps {
 
 export function ExecutionPanel({
   projectId,
+  workspaceId,
   tasks,
   dependencies,
   risks,
@@ -122,7 +125,7 @@ export function ExecutionPanel({
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <GitBranch className="h-4 w-4 text-muted-foreground" />
+              <GitBranchIcon className="h-4 w-4 text-muted-foreground" />
               <CardTitle>Dependencias</CardTitle>
             </div>
             <CardDescription>
@@ -475,6 +478,16 @@ export function ExecutionPanel({
           </div>
         </CardContent>
       </Card>
+
+      {/* Git Integration Section */}
+      <h3 className="text-lg font-semibold mt-8 mb-4">Integracao Git</h3>
+
+      <ProjectRepositories projectId={projectId} workspaceId={workspaceId} />
+
+      <div className="grid gap-6 md:grid-cols-2 mt-6">
+        <RecentCommits projectId={projectId} limit={10} />
+        <DeploymentsList projectId={projectId} limit={10} />
+      </div>
     </div>
   )
 }
