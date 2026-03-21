@@ -47,15 +47,15 @@ export const offlineSyncSchema = z.object({
   operationType: z.enum(['CREATE', 'UPDATE', 'DELETE']),
   entityType: z.string(),
   entityId: z.string().uuid().optional(),
-  payload: z.record(z.unknown())
+  payload: z.record(z.string(), z.unknown())
 })
 
 export const activityLogSchema = z.object({
   actionType: z.string(),
   entityType: z.string(),
   entityId: z.string().uuid().optional(),
-  previousState: z.record(z.unknown()).optional(),
-  newState: z.record(z.unknown()).optional(),
+  previousState: z.record(z.string(), z.unknown()).optional(),
+  newState: z.record(z.string(), z.unknown()).optional(),
   canUndo: z.boolean().default(true)
 })
 
