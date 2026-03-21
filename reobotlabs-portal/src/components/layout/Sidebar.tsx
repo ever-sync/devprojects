@@ -17,6 +17,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   BarChart3,
+  FileBadge,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
@@ -41,6 +42,11 @@ const mainNavItems: NavItem[] = [
     href: '/analytics',
     icon: <BarChart3 className="w-4 h-4 shrink-0" />,
     adminOnly: true,
+  },
+  {
+    label: 'Propostas',
+    href: '/proposals',
+    icon: <FileBadge className="w-4 h-4 shrink-0" />,
   },
   {
     label: 'Projetos',
