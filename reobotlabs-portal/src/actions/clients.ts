@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { createAuditLog, getClientWorkspaceId } from '@/lib/workspace-access'
 import { checkWorkspaceMemberLimit } from '@/lib/workspace-limits'
+import { getAppUrl } from '@/lib/app-url'
 import { clientSchema, inviteUserSchema, type ClientInput, type InviteUserInput } from '@/lib/validations'
 
 async function requireAdmin() {
@@ -155,6 +156,7 @@ export async function inviteClientUser(data: InviteUserInput) {
   if (!memberLimitCheck.allowed) return { error: memberLimitCheck.error ?? 'Limite de membros atingido' }
 
   const adminClient = createAdminClient()
+  const appUrl = getAppUrl()
   const { data: invitedUser, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
     parsed.data.email,
     {
@@ -162,7 +164,7 @@ export async function inviteClientUser(data: InviteUserInput) {
         full_name: parsed.data.full_name,
         role: 'client',
       },
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback`,
+      redirectTo: `${appUrl}/api/auth/callback`,
     },
   )
 

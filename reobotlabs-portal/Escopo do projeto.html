@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadFlow — Plano de Projeto | EverSync</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #FFFFFF;
+    --bg: #FAFAFA;
+    --black: #111111;
+    --text: #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted: #888888;
+    --border: #E5E5E5;
+    --border-light: #F0F0F0;
+    --accent: #111111;
+    --accent-light: #F5F5F5;
+    --green: #1A8754;
+    --green-bg: #EDFCF2;
+    --blue: #1D5DA8;
+    --blue-bg: #EFF6FF;
+    --amber: #92640D;
+    --amber-bg: #FFFBEB;
+    --red: #B42318;
+    --red-bg: #FEF3F2;
+    --purple: #6941C6;
+    --purple-bg: #F4F3FF;
+    --radius: 10px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--white);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ───── HEADER ───── */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.3px;
+    color: var(--black);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--black);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .header-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--accent-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ───── HERO ───── */
+  .hero {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.15;
+    color: var(--black);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .hero-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 540px;
+    line-height: 1.6;
+  }
+
+  /* ───── META CARDS ───── */
+  .meta-grid {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .meta-card {
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .meta-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .meta-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--black);
+    line-height: 1.35;
+  }
+
+  /* ───── CONTENT ───── */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ───── SECTIONS ───── */
+  .section {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 4.5vw, 28px);
+    color: var(--black);
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .section-intro {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+
+  /* ───── SUBSECTION ───── */
+  .subsection {
+    margin-bottom: 28px;
+  }
+  .subsection-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--black);
+    display: inline-block;
+  }
+
+  /* ───── LISTS ───── */
+  .feature-list {
+    list-style: none;
+    padding: 0;
+  }
+  .feature-list li {
+    padding: 7px 0 7px 20px;
+    position: relative;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .feature-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 6px; height: 6px;
+    background: var(--black);
+    border-radius: 50%;
+  }
+  .feature-list li.sub-item {
+    padding-left: 36px;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .feature-list li.sub-item::before {
+    left: 20px;
+    width: 4px; height: 4px;
+    background: var(--text-muted);
+  }
+
+  /* ───── SPRINT CARDS ───── */
+  .sprint-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .sprint-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .sprint-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .sprint-number {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--white);
+    background: var(--black);
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sprint-info { flex: 1; min-width: 0; }
+  .sprint-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--black);
+    line-height: 1.3;
+  }
+  .sprint-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .sprint-arrow {
+    width: 20px; height: 20px;
+    color: var(--text-muted);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .sprint-card.open .sprint-arrow { transform: rotate(180deg); }
+  .sprint-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .sprint-card.open .sprint-body { max-height: 600px; }
+  .sprint-body-inner {
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 16px;
+  }
+  .sprint-tasks {
+    list-style: none; padding: 0;
+  }
+  .sprint-tasks li {
+    padding: 5px 0 5px 18px;
+    position: relative;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .sprint-tasks li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 12px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .sprint-deliverable {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--green-bg);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .sprint-deliverable span {
+    font-weight: 400;
+    color: #2D6A4F;
+  }
+
+  /* ───── PROGRESS TABLE ───── */
+  .progress-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .progress-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--black);
+  }
+  .progress-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  .progress-table tr:last-child td { border-bottom: none; }
+  .progress-bar-cell { width: 40%; }
+  .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--accent-light);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--black);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .pct { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+
+  /* ───── TABLES GENERIC ───── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    background: var(--black);
+  }
+  .data-table th:first-child { border-radius: 8px 0 0 0; }
+  .data-table th:last-child { border-radius: 0 8px 0 0; }
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: top;
+  }
+  .data-table tr:nth-child(even) td { background: var(--accent-light); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* ───── TAGS ───── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 5px;
+    letter-spacing: 0.02em;
+  }
+  .tag-green { background: var(--green-bg); color: var(--green); }
+  .tag-blue { background: var(--blue-bg); color: var(--blue); }
+  .tag-amber { background: var(--amber-bg); color: var(--amber); }
+  .tag-red { background: var(--red-bg); color: var(--red); }
+  .tag-purple { background: var(--purple-bg); color: var(--purple); }
+
+  /* ───── WEBHOOK CODE ───── */
+  .code-block {
+    background: var(--accent-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.65;
+    overflow-x: auto;
+    color: var(--text);
+    margin: 16px 0;
+  }
+  .code-key { color: var(--blue); }
+  .code-string { color: var(--green); }
+  .code-comment { color: var(--text-muted); font-style: italic; }
+
+  /* ───── INFO BOX ───── */
+  .info-box {
+    background: var(--accent-light);
+    border-left: 3px solid var(--black);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 18px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .info-box strong { color: var(--black); }
+
+  /* ───── FOOTER ───── */
+  .site-footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--black);
+    margin-bottom: 8px;
+  }
+  .footer-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+  .footer-sig {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .sig-block { text-align: center; }
+  .sig-line {
+    width: 180px;
+    border-bottom: 1px solid var(--black);
+    margin-bottom: 6px;
+    height: 40px;
+  }
+  .sig-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .sig-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ───── NAV TOC ───── */
+  .toc {
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 8px;
+  }
+  .toc-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .toc-list {
+    list-style: none; padding: 0;
+    columns: 2;
+    column-gap: 24px;
+  }
+  .toc-list li {
+    padding: 4px 0;
+    break-inside: avoid;
+  }
+  .toc-list a {
+    font-size: 13px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .toc-list a:hover { color: var(--text-muted); }
+  .toc-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-right: 4px;
+  }
+
+  /* ───── PANEL TABS ───── */
+  .panel-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .panel-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .panel-tab.active {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+  .panel-content { display: none; }
+  .panel-content.active { display: block; }
+
+  /* ───── RESPONSIVE ───── */
+  @media (max-width: 600px) {
+    .hero { padding: 32px 20px 28px; }
+    .meta-grid { padding: 24px 20px; grid-template-columns: 1fr; }
+    .content { padding: 0 20px; }
+    .toc-list { columns: 1; }
+    .header-inner { padding: 12px 20px; }
+    .sprint-header { padding: 14px 16px; gap: 10px; }
+    .sprint-body-inner { padding: 0 16px 16px; padding-top: 14px; }
+    .data-table { font-size: 12px; }
+    .data-table th, .data-table td { padding: 8px; }
+    .footer-sig { gap: 32px; }
+    .panel-tabs { gap: 4px; }
+    .panel-tab { padding: 6px 12px; font-size: 12px; }
+  }
+
+  @media print {
+    .site-header { position: static; }
+    .sprint-body { max-height: none !important; }
+    .sprint-card { break-inside: avoid; }
+    .section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <span class="logo-mark">E</span>
+      EverSync
+    </a>
+    <span class="header-badge">Plano de Projeto v1.0</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Projeto LeadFlow &mdash; Maro 2026</div>
+  <h1>Plano de Desenvolvimento<br>Gesto de Leads &amp; Eventos</h1>
+  <p class="hero-subtitle">
+    Plataforma multiplataforma (Desktop, iOS, Android) para gesto completa de leads, 
+    eventos e vendas com integrao Facebook Ads, WhatsApp e automao via webhooks n8n.
+  </p>
+</div>
+
+<!-- META CARDS -->
+<div class="meta-grid">
+  <div class="meta-card">
+    <div class="meta-label">Data de Incio</div>
+    <div class="meta-value">17 de Maro, 2026</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Carga Total</div>
+    <div class="meta-value">60 horas &middot; 5h/semana</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Entregas</div>
+    <div class="meta-value">12 sprints de 5 horas</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Previso de Concluso</div>
+    <div class="meta-value">9 de Junho, 2026</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Plataformas</div>
+    <div class="meta-value">Desktop + iOS + Android</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-label">Painis de Acesso</div>
+    <div class="meta-value">Gestor  Cliente  Vendedor  Recepo</div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- TOC -->
+  <div class="section" id="toc">
+    <div class="toc">
+      <div class="toc-title">ndice do Documento</div>
+      <ol class="toc-list">
+        <li><a href="#visao"><span class="toc-num">01</span> Viso Geral</a></li>
+        <li><a href="#stack"><span class="toc-num">02</span> Stack Tecnolgica</a></li>
+        <li><a href="#arquitetura"><span class="toc-num">03</span> Arquitetura</a></li>
+        <li><a href="#paineis"><span class="toc-num">04</span> Funcionalidades por Painel</a></li>
+        <li><a href="#integracoes"><span class="toc-num">05</span> Integraes</a></li>
+        <li><a href="#cronograma"><span class="toc-num">06</span> Cronograma de Sprints</a></li>
+        <li><a href="#entregas"><span class="toc-num">07</span> Matriz de Entregas</a></li>
+        <li><a href="#riscos"><span class="toc-num">08</span> Riscos</a></li>
+        <li><a href="#aceite"><span class="toc-num">09</span> Critrios de Aceite</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 01 VISAO GERAL -->
+  <div class="section" id="visao">
+    <div class="section-number">01</div>
+    <h2 class="section-title">Viso Geral do Projeto</h2>
+    <p class="section-intro">
+      O <strong>LeadFlow</strong>  uma plataforma para gesto completa de leads, eventos e vendas.
+      Conecta gestores de eventos, clientes (empresas), vendedores e recepo num ecossistema 
+      integrado com Facebook Ads API, WhatsApp Business e automaes via webhooks para n8n.
+    </p>
+
+    <table class="data-table">
+      <tr><th style="width:35%">Item</th><th>Detalhe</th></tr>
+      <tr><td><strong>Projeto</strong></td><td>LeadFlow &mdash; Gesto de Leads, Eventos e Vendas</td></tr>
+      <tr><td><strong>Desenvolvido por</strong></td><td>EverSync</td></tr>
+      <tr><td><strong>Plataformas</strong></td><td>Desktop (Windows/macOS), iOS, Android</td></tr>
+      <tr><td><strong>Carga Horria</strong></td><td>60 horas totais &middot; 5 horas por semana &middot; 12 semanas</td></tr>
+      <tr><td><strong>Metodologia</strong></td><td>Sprints semanais de 5h com entregas incrementais</td></tr>
+      <tr><td><strong>Perfis de Acesso</strong></td><td>Gestor de Eventos &middot; Cliente &middot; Vendedor &middot; Recepo</td></tr>
+    </table>
+
+    <div class="info-box">
+      <strong>Distribuio de horas:</strong> Sprint 1 (5h) planejamento &middot; 
+      Sprints 2&ndash;6 (25h) backend/API &middot; 
+      Sprints 7&ndash;11 (25h) frontend/painis &middot; 
+      Sprint 12 (5h) testes e deploy.
+    </div>
+  </div>
+
+  <!-- 02 STACK -->
+  <div class="section" id="stack">
+    <div class="section-number">02</div>
+    <h2 class="section-title">Stack Tecnolgica</h2>
+
+    <table class="data-table">
+      <tr><th>Camada</th><th>Tecnologia</th><th>Justificativa</th></tr>
+      <tr><td><strong>Mobile</strong></td><td>React Native + Expo</td><td>Cdigo compartilhado iOS/Android, OTA updates</td></tr>
+      <tr><td><strong>Desktop</strong></td><td>Electron + React</td><td>Ecossistema maduro, auto-update, reutiliza componentes</td></tr>
+      <tr><td><strong>Backend</strong></td><td>Node.js (NestJS)</td><td>TypeScript, modular, ideal para SaaS</td></tr>
+      <tr><td><strong>Banco de Dados</strong></td><td>PostgreSQL</td><td>Relacional robusto, JSONB, extensvel</td></tr>
+      <tr><td><strong>ORM</strong></td><td>Prisma</td><td>Type-safe, migrations automticas</td></tr>
+      <tr><td><strong>Cache / Filas</strong></td><td>Redis + BullMQ</td><td>Cache, filas de webhooks, pub/sub</td></tr>
+      <tr><td><strong>Real-time</strong></td><td>Socket.IO</td><td>Chat em tempo real, notificaes</td></tr>
+      <tr><td><strong>Auth</strong></td><td>JWT + Refresh Tokens</td><td>RBAC com 4 perfis</td></tr>
+      <tr><td><strong>Storage</strong></td><td>AWS S3 / Cloudflare R2</td><td>Capas de cursos, imagens, documentos</td></tr>
+      <tr><td><strong>Facebook</strong></td><td>Marketing API + Lead Ads</td><td>Sincronizao de leads automtica</td></tr>
+      <tr><td><strong>WhatsApp</strong></td><td>Cloud API (Meta)</td><td>API oficial, templates, recepo de msgs</td></tr>
+      <tr><td><strong>Automaes</strong></td><td>Webhooks HTTP POST</td><td>Compatvel com n8n, Zapier, Make</td></tr>
+    </table>
+  </div>
+
+  <!-- 03 ARQUITETURA -->
+  <div class="section" id="arquitetura">
+    <div class="section-number">03</div>
+    <h2 class="section-title">Arquitetura do Sistema</h2>
+
+    <div class="subsection">
+      <div class="subsection-title">Fluxo de Dados</div>
+      <table class="data-table">
+        <tr><th style="width:6%">#</th><th style="width:25%">Origem</th><th style="width:38%">Processo</th><th>Resultado</th></tr>
+        <tr><td><strong>1</strong></td><td>Facebook Lead Form</td><td>Webhook &rarr; Backend Listener</td><td>Lead chega automaticamente</td></tr>
+        <tr><td><strong>2</strong></td><td>Backend</td><td>Valida &rarr; DB &rarr; Campanha</td><td>Lead cadastrado e classificado</td></tr>
+        <tr><td><strong>3</strong></td><td>Webhook n8n</td><td>HTTP POST com payload</td><td>Automao disparada</td></tr>
+        <tr><td><strong>4</strong></td><td>Distribuio</td><td>Round Robin / Ponderado / Manual</td><td>Lead atribudo ao vendedor</td></tr>
+        <tr><td><strong>5</strong></td><td>Vendedor</td><td>Push notification + In-app</td><td>Vendedor contacta lead</td></tr>
+        <tr><td><strong>6</strong></td><td>CRM</td><td>Lead muda etapa &rarr; Webhook</td><td>Pipeline atualizado</td></tr>
+        <tr><td><strong>7</strong></td><td>Recepo</td><td>Check-in do lead</td><td>Vendedor notificado</td></tr>
+      </table>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Mdulos do Sistema</div>
+      <table class="data-table">
+        <tr><th>Mdulo</th><th>Responsabilidades</th></tr>
+        <tr><td><strong>Auth</strong></td><td>Login, RBAC, JWT, Sesses, Refresh Tokens</td></tr>
+        <tr><td><strong>Lead</strong></td><td>CRUD, Import/Export Excel, Tags, Filtros</td></tr>
+        <tr><td><strong>CRM</strong></td><td>Pipeline Kanban, Etapas customizveis, Histrico</td></tr>
+        <tr><td><strong>Event</strong></td><td>Cadastro de eventos, Interesse, Confirmao</td></tr>
+        <tr><td><strong>Chat</strong></td><td>Real-time, Histrico, Integrao WhatsApp</td></tr>
+        <tr><td><strong>Campaign</strong></td><td>Distribuio de leads, Regras, Relatrios</td></tr>
+        <tr><td><strong>Course</strong></td><td>Aulas, Progresso, Ranking de vendedores</td></tr>
+        <tr><td><strong>Webhook</strong></td><td>Dispatcher n8n, Retry, Fila, 10 tipos de eventos</td></tr>
+        <tr><td><strong>Facebook</strong></td><td>OAuth, Marketing API, Lead Ads Webhook</td></tr>
+        <tr><td><strong>Notification</strong></td><td>Push mobile, In-app, Email</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 04 FUNCIONALIDADES POR PAINEL -->
+  <div class="section" id="paineis">
+    <div class="section-number">04</div>
+    <h2 class="section-title">Funcionalidades por Painel</h2>
+
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="switchPanel('gestor')">Gestor</div>
+      <div class="panel-tab" onclick="switchPanel('cliente')">Cliente</div>
+      <div class="panel-tab" onclick="switchPanel('vendedor')">Vendedor</div>
+      <div class="panel-tab" onclick="switchPanel('recepcao')">Recepo</div>
+    </div>
+
+    <!-- GESTOR -->
+    <div class="panel-content active" id="panel-gestor">
+      <div class="subsection">
+        <div class="subsection-title">Dashboard</div>
+        <ul class="feature-list">
+          <li>Total de clientes ativos e inativos</li>
+          <li>Total de leads no sistema (todos os clientes)</li>
+          <li>Grfico de leads por fonte (Ads, WhatsApp, Formulrio, Importao)</li>
+          <li>Eventos prximos com contagem de confirmados</li>
+          <li>Alertas (webhooks falhados, tokens expirados)</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Gestor de Eventos</div>
+        <ul class="feature-list">
+          <li>Seletor de cliente (dropdown com busca)</li>
+          <li>Lista de eventos do cliente com status</li>
+          <li>Criar/editar evento: nome, data, local, capacidade, capa</li>
+          <li>Dashboard do evento: interessados, confirmados, check-ins</li>
+          <li>Exportar lista de confirmados (CSV/Excel)</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">CRM (vinculado ao cliente)</div>
+        <ul class="feature-list">
+          <li>Pipeline visual Kanban com etapas customizveis</li>
+          <li>Drag &amp; drop de leads entre etapas</li>
+          <li>Filtros: tag, vendedor, campanha, data, fonte</li>
+          <li>Histrico completo de movimentao do lead</li>
+          <li>Webhook disparado a cada mudana de etapa</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Chat (seletor de empresa)</div>
+        <ul class="feature-list">
+          <li>Seletor de empresa para ver conversas do cliente</li>
+          <li>Lista de conversas (WhatsApp integrado)</li>
+          <li>Painel lateral com informaes do lead:</li>
+          <li class="sub-item">Etapa atual no CRM</li>
+          <li class="sub-item">Dados de contato, Tags, Data de confirmao</li>
+          <li class="sub-item">Evento de interesse e histrico</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Criao de Clientes (abas)</div>
+        <ul class="feature-list">
+          <li><strong>Perfil Cliente:</strong> nome empresa, CNPJ, logo, endereo</li>
+          <li><strong>Cadastro de Acesso:</strong> email, senha, permisses, plano</li>
+          <li><strong>Eventos:</strong> lista de eventos vinculados</li>
+          <li><strong>Ads (Facebook):</strong> OAuth, Ad Account, Page ID, Token</li>
+          <li><strong>Rubinho:</strong> mdulo customizado configurvel</li>
+          <li><strong>Conexes:</strong> WhatsApp Business API, nmero ligao</li>
+          <li><strong>Lista de Leads:</strong> todos os leads do cliente</li>
+          <li><strong>Conversas:</strong> histrico de chat</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Cursos (abas)</div>
+        <ul class="feature-list">
+          <li><strong>Dashboard:</strong> total cursos, alunos, taxa concluso</li>
+          <li><strong>Cadastro:</strong> aulas (vdeo/texto), valor, categorias, capas</li>
+          <li><strong>Lista de Alunos:</strong> progresso, cursos inscritos, ltimo acesso</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CLIENTE -->
+    <div class="panel-content" id="panel-cliente">
+      <div class="subsection">
+        <div class="subsection-title">Dashboard</div>
+        <ul class="feature-list">
+          <li>Total de leads (hoje, semana, ms)</li>
+          <li>Leads por fonte: Ads, Formulrio, WhatsApp, Importao</li>
+          <li>Funil de CRM por etapa</li>
+          <li>Performance dos vendedores</li>
+          <li>Converso por campanha</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Lista de Leads</div>
+        <ul class="feature-list">
+          <li>Tabela com filtros avanados (fonte, etapa, vendedor, data, tag)</li>
+          <li>Fontes: Facebook Ads, Formulrio pgina, WhatsApp, Importao Excel</li>
+          <li>Exportar (CSV/Excel) e Importar (Excel com mapeamento de colunas)</li>
+          <li>Aes em massa: atribuir vendedor, mover etapa, adicionar tag</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Vendedores</div>
+        <ul class="feature-list">
+          <li>Cadastro com perfil completo (nome, foto, telefone, email)</li>
+          <li>Login e permisses especficas do vendedor</li>
+          <li>Mtricas: leads atribudos, convertidos, tempo mdio de resposta</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Campanhas</div>
+        <ul class="feature-list">
+          <li>Criar campanhas de distribuio de leads</li>
+          <li>Filtrar quais leads entram (fonte, tag, evento, data)</li>
+          <li>Selecionar vendedores participantes</li>
+          <li>Mtodo: Round Robin, Ponderado, Manual</li>
+          <li>Dashboard da campanha com performance por vendedor</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Cursos</div>
+        <ul class="feature-list">
+          <li>Selecionar cursos disponveis para vendedores</li>
+          <li>Definir acesso por vendedor</li>
+          <li>Relatrio de cursos assistidos/concludos</li>
+          <li>Ranking de vendedores que mais se aperfeioaram</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- VENDEDOR -->
+    <div class="panel-content" id="panel-vendedor">
+      <div class="subsection">
+        <div class="subsection-title">Dashboard de Vendas</div>
+        <ul class="feature-list">
+          <li>Leads atribudos: novos, em andamento, convertidos</li>
+          <li>Meta vs Realizado</li>
+          <li>Taxa de converso pessoal</li>
+          <li>Tempo mdio de resposta</li>
+          <li>Posio no ranking entre vendedores</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Lista de Leads</div>
+        <ul class="feature-list">
+          <li>Informaes completas de cada lead</li>
+          <li>Boto para redirecionar para WhatsApp pessoal</li>
+          <li>Evento de interesse do lead</li>
+          <li>Status de confirmao</li>
+          <li>Data e hora que ir  loja</li>
+          <li>Aes: confirmar, reagendar, adicionar nota</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Cursos</div>
+        <ul class="feature-list">
+          <li>Cursos disponibilizados pelo cliente</li>
+          <li>Player de vdeo integrado</li>
+          <li>Progresso pessoal por curso</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- RECEPCAO -->
+    <div class="panel-content" id="panel-recepcao">
+      <div class="subsection">
+        <div class="subsection-title">Lista de Clientes / Check-in</div>
+        <ul class="feature-list">
+          <li>Lista de leads esperados no dia</li>
+          <li>Busca rpida por nome, telefone, evento</li>
+          <li>Boto de cadastro rpido (walk-in)</li>
+          <li>Boto de confirmar chegada (check-in)</li>
+          <li>Status visual: <span class="tag tag-blue">Esperado</span> <span class="tag tag-green">Chegou</span> <span class="tag tag-red">No veio</span></li>
+          <li>Notificao automtica ao vendedor no check-in</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 INTEGRACOES -->
+  <div class="section" id="integracoes">
+    <div class="section-number">05</div>
+    <h2 class="section-title">Integraes Externas</h2>
+
+    <div class="subsection">
+      <div class="subsection-title">Facebook Ads API</div>
+      <ul class="feature-list">
+        <li>Cliente conecta conta Facebook via OAuth 2.0</li>
+        <li>Backend armazena access_token + page_id + ad_account_id</li>
+        <li>Lead Ads Webhook: lead preenche formulrio &rarr; POST automtico ao backend</li>
+        <li>Backend processa: cria lead, atribui campanha, dispara webhook n8n</li>
+        <li>Sincronizao peridica de campanhas via Marketing API</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">Webhooks para n8n</div>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:14px;">
+        HTTP POST disparado automaticamente para a URL configurada pelo cliente:
+      </p>
+      <table class="data-table">
+        <tr><th>Evento</th><th>Descrio</th></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">lead.created</code></td><td>Novo lead cadastrado</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">lead.stage_changed</code></td><td>Lead mudou de etapa no CRM</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">lead.assigned</code></td><td>Lead atribudo a vendedor</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">lead.confirmed</code></td><td>Lead confirmou presena</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">lead.checked_in</code></td><td>Check-in na recepo</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">event.created</code></td><td>Novo evento criado</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">campaign.started</code></td><td>Campanha iniciada</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">conversation.new_message</code></td><td>Nova mensagem no chat</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">vendor.course_completed</code></td><td>Vendedor concluiu curso</td></tr>
+        <tr><td><code style="font-family:var(--font-mono);color:var(--green);font-size:12px;">facebook.new_lead</code></td><td>Lead do Facebook Ads</td></tr>
+      </table>
+
+      <div class="code-block">
+<span class="code-comment">// Exemplo de payload webhook</span>
+{
+  <span class="code-key">"event"</span>: <span class="code-string">"lead.created"</span>,
+  <span class="code-key">"timestamp"</span>: <span class="code-string">"2026-03-17T14:30:00Z"</span>,
+  <span class="code-key">"client_id"</span>: <span class="code-string">"cli_abc123"</span>,
+  <span class="code-key">"data"</span>: {
+    <span class="code-key">"lead_id"</span>: <span class="code-string">"lead_xyz789"</span>,
+    <span class="code-key">"name"</span>: <span class="code-string">"Joo Silva"</span>,
+    <span class="code-key">"phone"</span>: <span class="code-string">"+5511999999999"</span>,
+    <span class="code-key">"source"</span>: <span class="code-string">"facebook_ads"</span>,
+    <span class="code-key">"campaign_id"</span>: <span class="code-string">"camp_def456"</span>
+  }
+}
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">WhatsApp Business API</div>
+      <ul class="feature-list">
+        <li>Integrao via WhatsApp Cloud API (Meta) &mdash; oficial</li>
+        <li>Receber e enviar mensagens, templates aprovados, mdia</li>
+        <li>Nmero configurado na aba Conexes do cliente</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 06 CRONOGRAMA -->
+  <div class="section" id="cronograma">
+    <div class="section-number">06</div>
+    <h2 class="section-title">Cronograma &mdash; Sprints de 5 Horas</h2>
+    <p class="section-intro">
+      Cada sprint corresponde a uma semana de trabalho (5h). Ao final de cada sprint, 
+      o desenvolvedor entrega resultados tangveis para acompanhamento do progresso.
+    </p>
+
+    <!-- SPRINT 1 -->
+    <div class="sprint-card open" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">01</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Mapeamento, Arquitetura e Setup</div>
+          <div class="sprint-meta">Semana 1 &middot; 5 horas &middot; 17&ndash;21 Mar</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Mapeamento completo de requisitos do projeto</li>
+            <li>Definio da arquitetura (diagramas)</li>
+            <li>Modelagem do banco de dados PostgreSQL (14 entidades)</li>
+            <li>Setup do repositrio (mono-repo com Git)</li>
+            <li>Configurao do ambiente (Docker, ESLint, Prettier)</li>
+            <li>Documentao da estrutura de pastas e padres</li>
+            <li>Entrega do documento de escopo validado</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Documento de escopo final + Diagrama de arquitetura + Schema SQL + Repositrio configurado</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 2 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">02</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Backend Core &mdash; Autenticao e Usurios</div>
+          <div class="sprint-meta">Semana 2 &middot; 5 horas &middot; 24&ndash;28 Mar</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Setup do framework backend (NestJS)</li>
+            <li>Configurao PostgreSQL + Prisma ORM</li>
+            <li>Sistema de autenticao (JWT + Refresh Tokens)</li>
+            <li>RBAC &mdash; 4 perfis de acesso</li>
+            <li>CRUD de usurios com validao</li>
+            <li>Middleware de autorizao por rota/perfil</li>
+            <li>Testes unitrios do mdulo de auth</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>API de Auth com JWT + RBAC + 4 perfis + Testes</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 3 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">03</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Backend &mdash; Clientes, Leads e CRM</div>
+          <div class="sprint-meta">Semana 3 &middot; 5 horas &middot; 31 Mar&ndash;4 Abr</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>CRUD completo de Clientes (empresas do gestor)</li>
+            <li>CRUD de Leads com todas as propriedades</li>
+            <li>CRM: etapas customizveis por cliente</li>
+            <li>Histrico de movimentao (crm_history)</li>
+            <li>Sistema de Tags para leads</li>
+            <li>Filtros avanados de leads</li>
+            <li>Endpoint de movimentao com trigger webhook</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>API de Clientes + Leads + CRM Pipeline + Histrico</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 4 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">04</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Backend &mdash; Eventos, Campanhas e Distribuio</div>
+          <div class="sprint-meta">Semana 4 &middot; 5 horas &middot; 7&ndash;11 Abr</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>CRUD de Eventos vinculados ao cliente</li>
+            <li>Sistema de interesse e confirmao</li>
+            <li>CRUD de Campanhas de distribuio</li>
+            <li>Motor: Round Robin, Ponderado, Manual</li>
+            <li>Vinculao vendedores/campanhas</li>
+            <li>Atribuio automtica de leads</li>
+            <li>Endpoints de dashboard de eventos e campanhas</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>API de Eventos + Campanhas + Distribuio automtica</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 5 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">05</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Backend &mdash; Webhooks, Facebook e WhatsApp</div>
+          <div class="sprint-meta">Semana 5 &middot; 5 horas &middot; 14&ndash;18 Abr</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Sistema genrico de webhooks (dispatcher n8n)</li>
+            <li>10 tipos de eventos configurados</li>
+            <li>Fila de processamento (BullMQ/Redis)</li>
+            <li>Retry automtico para webhooks falhados</li>
+            <li>Facebook Lead Ads (webhook receiver)</li>
+            <li>OAuth 2.0 para contas Facebook</li>
+            <li>Endpoint WhatsApp Business API</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Webhooks n8n + Facebook Lead Ads + WhatsApp receiver</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 6 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">06</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Backend &mdash; Chat, Cursos e Import/Export</div>
+          <div class="sprint-meta">Semana 6 &middot; 5 horas &middot; 21&ndash;25 Abr</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Chat real-time com Socket.IO</li>
+            <li>Integrao chat com dados WhatsApp</li>
+            <li>CRUD de Cursos (aulas, valor, categorias, capas)</li>
+            <li>Progresso de vendedores nos cursos</li>
+            <li>Ranking de vendedores por concluso</li>
+            <li>Import de leads via Excel (parse + mapeamento)</li>
+            <li>Export de leads para CSV/Excel</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Chat real-time + Cursos + Import/Export + Ranking</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 7 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">07</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Frontend &mdash; Setup e Autenticao</div>
+          <div class="sprint-meta">Semana 7 &middot; 5 horas &middot; 28 Abr&ndash;2 Mai</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Setup React Native (Expo) para mobile</li>
+            <li>Setup Electron para desktop</li>
+            <li>Design system: componentes base</li>
+            <li>Tela de Login responsiva (mobile + desktop)</li>
+            <li>Fluxo de autenticao completo no frontend</li>
+            <li>Navegao com rotas protegidas por perfil</li>
+            <li>Tela de perfil do usurio</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>App base mobile + desktop com login e navegao</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 8 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">08</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Frontend &mdash; Painel Gestor (Parte 1)</div>
+          <div class="sprint-meta">Semana 8 &middot; 5 horas &middot; 5&ndash;9 Mai</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Dashboard do Gestor: cards, grficos de leads por fonte</li>
+            <li>Gesto de clientes (lista, criao, edio)</li>
+            <li>Abas do cliente: Perfil, Acesso, Eventos, Ads, Conexes, Leads</li>
+            <li>CRM Kanban com drag &amp; drop</li>
+            <li>Filtros do CRM</li>
+            <li>Histrico de movimentao do lead</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Painel Gestor: Dashboard + Clientes + CRM Kanban</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 9 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">09</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Frontend &mdash; Painel Gestor (Parte 2) + Chat</div>
+          <div class="sprint-meta">Semana 9 &middot; 5 horas &middot; 12&ndash;16 Mai</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Gestor de Eventos: seletor de cliente, CRUD visual</li>
+            <li>Dashboard do evento (interessados, confirmados)</li>
+            <li>Chat: seletor de empresa, lista de conversas</li>
+            <li>Painel lateral: info do lead (etapa, tags, dados)</li>
+            <li>Chat real-time com Socket.IO no frontend</li>
+            <li>Gesto de Cursos (CRUD, upload de capas)</li>
+            <li>Dashboard de cursos e lista de alunos</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Gestor completo: Eventos + Chat real-time + Cursos</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 10 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">10</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Frontend &mdash; Painel do Cliente</div>
+          <div class="sprint-meta">Semana 10 &middot; 5 horas &middot; 19&ndash;23 Mai</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Dashboard do Cliente: leads, performance, converso</li>
+            <li>Lista de Leads: tabela, filtros, aes em massa</li>
+            <li>Import/Export (interface Excel + mapeamento)</li>
+            <li>Cadastro de Vendedores (perfil, acesso, mtricas)</li>
+            <li>Campanhas: criao, seleo de leads/vendedores</li>
+            <li>Cursos: seleo, acesso por vendedor, relatrio, ranking</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Painel Cliente completo</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 11 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">11</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Frontend &mdash; Painel Vendedor + Recepo</div>
+          <div class="sprint-meta">Semana 11 &middot; 5 horas &middot; 26&ndash;30 Mai</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Dashboard de Vendas do vendedor</li>
+            <li>Lista de leads com boto WhatsApp, confirmao, agenda</li>
+            <li>Cursos do vendedor (player, progresso)</li>
+            <li>Painel Recepo: lista do dia, busca, check-in</li>
+            <li>Cadastro rpido walk-in</li>
+            <li>Notificao ao vendedor no check-in</li>
+            <li>Status visual: esperado, chegou, no veio</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Painel Vendedor + Painel Recepo completos</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPRINT 12 -->
+    <div class="sprint-card" onclick="toggleSprint(this)">
+      <div class="sprint-header">
+        <div class="sprint-number">12</div>
+        <div class="sprint-info">
+          <div class="sprint-name">Testes, Polish e Deploy</div>
+          <div class="sprint-meta">Semana 12 &middot; 5 horas &middot; 2&ndash;6 Jun</div>
+        </div>
+        <svg class="sprint-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+      </div>
+      <div class="sprint-body">
+        <div class="sprint-body-inner">
+          <ul class="sprint-tasks">
+            <li>Testes end-to-end dos fluxos crticos</li>
+            <li>Testes de integrao (Facebook, WhatsApp, Webhooks)</li>
+            <li>Correo de bugs e ajustes de UI/UX</li>
+            <li>Otimizao de performance</li>
+            <li>Deploy (API, Mobile stores, Desktop auto-update)</li>
+            <li>Monitoramento (logs, Sentry, health checks)</li>
+            <li>Documentao final da API (Swagger)</li>
+          </ul>
+          <div class="sprint-deliverable"> Entrega: <span>Aplicao completa testada, documentada e pronta para deploy</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 07 MATRIZ DE ENTREGAS -->
+  <div class="section" id="entregas">
+    <div class="section-number">07</div>
+    <h2 class="section-title">Matriz de Entregas</h2>
+
+    <table class="progress-table">
+      <thead>
+        <tr>
+          <th>Sprint</th>
+          <th>Entrega</th>
+          <th class="progress-bar-cell">Progresso</th>
+          <th style="text-align:right">%</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>01</strong></td><td>Escopo + Repo + Schema SQL</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:8%"></div></div></td><td style="text-align:right" class="pct">8%</td></tr>
+        <tr><td><strong>02</strong></td><td>API Auth + RBAC (4 perfis)</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:17%"></div></div></td><td style="text-align:right" class="pct">17%</td></tr>
+        <tr><td><strong>03</strong></td><td>Clientes + Leads + CRM Pipeline</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:25%"></div></div></td><td style="text-align:right" class="pct">25%</td></tr>
+        <tr><td><strong>04</strong></td><td>Eventos + Campanhas + Distribuio</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:33%"></div></div></td><td style="text-align:right" class="pct">33%</td></tr>
+        <tr><td><strong>05</strong></td><td>Webhooks + Facebook + WhatsApp</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:42%"></div></div></td><td style="text-align:right" class="pct">42%</td></tr>
+        <tr><td><strong>06</strong></td><td>Chat + Cursos + Import/Export</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:50%"></div></div></td><td style="text-align:right" class="pct">50%</td></tr>
+        <tr><td><strong>07</strong></td><td>App base + Login + Navegao</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:58%"></div></div></td><td style="text-align:right" class="pct">58%</td></tr>
+        <tr><td><strong>08</strong></td><td>Gestor: Dashboard + Clientes + CRM</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:67%"></div></div></td><td style="text-align:right" class="pct">67%</td></tr>
+        <tr><td><strong>09</strong></td><td>Gestor: Eventos + Chat + Cursos</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:75%"></div></div></td><td style="text-align:right" class="pct">75%</td></tr>
+        <tr><td><strong>10</strong></td><td>Painel Cliente completo</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:83%"></div></div></td><td style="text-align:right" class="pct">83%</td></tr>
+        <tr><td><strong>11</strong></td><td>Painel Vendedor + Recepo</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:92%"></div></div></td><td style="text-align:right" class="pct">92%</td></tr>
+        <tr><td><strong>12</strong></td><td>Testes + Deploy + Docs</td><td class="progress-bar-cell"><div class="progress-bar-track"><div class="progress-bar-fill" style="width:100%"></div></div></td><td style="text-align:right" class="pct">100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 08 RISCOS -->
+  <div class="section" id="riscos">
+    <div class="section-number">08</div>
+    <h2 class="section-title">Riscos e Mitigaes</h2>
+
+    <table class="data-table">
+      <tr><th style="width:12%">Nvel</th><th style="width:38%">Risco</th><th>Mitigao</th></tr>
+      <tr>
+        <td><span class="tag tag-red">ALTO</span></td>
+        <td>Atraso nas credenciais Facebook/WhatsApp</td>
+        <td>Solicitar com antecedncia (Sprint 3). Usar mocks at chegarem.</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-red">ALTO</span></td>
+        <td>Escopo maior que 60h disponveis</td>
+        <td>Priorizar features crticas. Secundrias viram backlog ps-lanamento.</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-amber">MDIO</span></td>
+        <td>Mudanas na API do Facebook</td>
+        <td>Usar verso estvel da API. Monitorar changelog.</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-amber">MDIO</span></td>
+        <td>Performance com volume alto de leads</td>
+        <td>Paginao, cache Redis, ndices PostgreSQL desde Sprint 3.</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">BAIXO</span></td>
+        <td>Rejeio nas stores (Apple/Google)</td>
+        <td>Seguir guidelines desde o incio. Buffer para ajustes.</td>
+      </tr>
+      <tr>
+        <td><span class="tag tag-green">BAIXO</span></td>
+        <td>Indisponibilidade do n8n</td>
+        <td>Retry com backoff exponencial. Logs para reenvio manual.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 09 CRITERIOS DE ACEITE -->
+  <div class="section" id="aceite">
+    <div class="section-number">09</div>
+    <h2 class="section-title">Critrios de Aceite</h2>
+    <p class="section-intro">Cada sprint  aceito quando todos os critrios abaixo forem atendidos:</p>
+
+    <ul class="feature-list">
+      <li>Todas as tarefas do sprint implementadas e demonstradas</li>
+      <li>Cdigo versionado no Git com commits descritivos</li>
+      <li>APIs funcionais e testveis via Postman/Insomnia</li>
+      <li>Telas navegveis no app (mobile e/ou desktop)</li>
+      <li>Sem erros crticos (crash) nas funcionalidades entregues</li>
+      <li>Demonstrao de 15&ndash;30 minutos ao final do sprint</li>
+      <li>Bloqueios comunicados imediatamente (no no final do sprint)</li>
+      <li>Documentao bsica (README, endpoints) atualizada</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-logo">EverSync</div>
+  <div class="footer-text">
+    Documento gerado em 17 de Maro de 2026<br>
+    Todas as estimativas so aproximadas e dependem do escopo final
+  </div>
+
+  <div class="footer-sig">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Contratante</div>
+      <div class="sig-date">Data: ___/___/______</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">EverSync</div>
+      <div class="sig-date">Data: ___/___/______</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function toggleSprint(card) {
+  card.classList.toggle('open');
+}
+
+function switchPanel(panel) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  document.getElementById('panel-' + panel).classList.add('active');
+}
+</script>
+</body>
+</html>
