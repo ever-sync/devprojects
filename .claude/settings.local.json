@@ -6,7 +6,14 @@
       "Bash(head:*)",
       "Bash(node -e:*)",
       "Bash(npm install:*)",
-      "Bash(\"c:/Users/rapha/OneDrive/Documentos/ReobotLabs/reobotlabs-portal/src/app/\\(dashboard\\)/dashboard/loading.tsx\")"
+      "Bash(\"c:/Users/rapha/OneDrive/Documentos/ReobotLabs/reobotlabs-portal/src/app/\\(dashboard\\)/dashboard/loading.tsx\")",
+      "Bash(git ls-tree:*)",
+      "Bash(xargs -I {} git show remotes/origin/qwen-code-53e747e6-42b7-4106-809e-431103086b1f:{})",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx supabase:*)"
     ]
   }
 }
