@@ -1,96 +1,50 @@
 ```
 # Dependencies
 node_modules/
-.yarn/
-pnp-*
 
-# Build outputs
+# Build artifacts
 dist/
 build/
-.next/
-out/
-.nuxt/
-public/dist/
-.svelte-kit/
+*.js
+*.ts
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-.venv/
+# Environment variables
 .env
 .env.local
-.env.
-.envrc
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-.coverage.*
+*.env.*
 
 # Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.lerna/
-nx/
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Thumbs.db:encryptable
-desktop.ini
-*.nib
-*.car
-*.modulemap
+# Temporary files
+*.tmp
 
-# Editor
+# IDE specific
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-*.tmp
 
-# Environment specific
-.env.local
-.env.production.local
-.env.development.local
+# OS specific
+.DS_Store
+Thumbs.db
 
-# Coverage
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage reports
 coverage/
-*.lcov
+htmlcov/
+.coverage
 
-# TypeScript
-*.tsbuildinfo
-*.tsx.swp
+# Database migrations backup
+*.sql.bak
+*.sql~
 
-# Supabase
-supabase/.temp/
-supabase/logs/
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Debug
-debug.log
-*.log
-
-# Local configuration
-local.properties
+# Local development
+local/
+*.local
 ```
