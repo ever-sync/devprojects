@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@react-pdf/renderer": "^4.3.2",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^1.7.0",
+    "openai": "^6.33.0",
+    "zod": "^4.3.6"
+  }
+}

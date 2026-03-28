@@ -5,48 +5,55 @@ node_modules/
 # Build artifacts
 dist/
 build/
-.next/
-.nuxt/
-public/build/
-
-# Logs
-*.log
+target/
 
 # Environment variables
-.env.local
 .env
+.env.local
+*.env.*
 
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
-# OS files
-.DS_Store
-Thumbs.db
+# Logs
+*.log
 
-# Python
+# Python cache (if present)
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
+
+# Coverage reports
+coverage/
+htmlcov/
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git*
-.pytest_cache/
-.hypothesis/
-.coverage*
+
+# Compression files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
