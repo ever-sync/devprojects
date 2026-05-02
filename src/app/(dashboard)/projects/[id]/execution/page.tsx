@@ -17,7 +17,7 @@ export default async function ProjectExecutionPage({ params }: Props) {
 
   const [{ data: profile }, { data: project }, { data: membership }, executionData] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
-    supabase.from('projects').select('id, name').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type').eq('id', id).single(),
     supabase.from('workspace_members').select('workspace_id').eq('user_id', user.id).single(),
     getProjectExecutionData(id),
   ])
@@ -37,7 +37,7 @@ export default async function ProjectExecutionPage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <ExecutionPanel
         projectId={id}

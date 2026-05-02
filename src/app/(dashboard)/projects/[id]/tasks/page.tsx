@@ -27,7 +27,7 @@ export default async function TasksPage({ params }: Props) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name, client_id')
+    .select('id, name, type, client_id')
     .eq('id', id)
     .single()
 
@@ -89,7 +89,7 @@ export default async function TasksPage({ params }: Props) {
         }
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       {isAdmin ? (
         <KanbanBoard

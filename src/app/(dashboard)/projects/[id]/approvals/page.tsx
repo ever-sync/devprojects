@@ -17,7 +17,7 @@ export default async function ProjectApprovalsPage({ params }: Props) {
 
   const [{ data: profile }, { data: project }, approvalsRes] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
-    supabase.from('projects').select('id, name').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type').eq('id', id).single(),
     getProjectApprovals(id),
   ])
 
@@ -35,7 +35,7 @@ export default async function ProjectApprovalsPage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <ApprovalsPanel
         projectId={id}

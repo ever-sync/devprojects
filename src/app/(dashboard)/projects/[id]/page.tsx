@@ -67,7 +67,7 @@ export default async function ProjectPage({ params }: Props) {
         }
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <ProjectOverview
         project={project}

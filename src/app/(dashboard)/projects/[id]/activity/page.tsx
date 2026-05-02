@@ -25,7 +25,7 @@ export default async function ActivityPage({ params }: Props) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name')
+    .select('id, name, type')
     .eq('id', id)
     .single()
 
@@ -52,7 +52,7 @@ export default async function ActivityPage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <div className="mt-6 space-y-10">
         {activitiesRes.data.length > 0 && (

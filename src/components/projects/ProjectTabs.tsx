@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-const ADMIN_TABS = [
+type Tab = { label: string; key: string }
+
+const BASE_ADMIN_TABS: Tab[] = [
   { label: 'Visao Geral', key: '' },
   { label: 'Escopo', key: 'scope' },
   { label: 'Tarefas', key: 'tasks' },
@@ -16,9 +18,17 @@ const ADMIN_TABS = [
   { label: 'Calendario', key: 'calendar' },
   { label: 'Documentos', key: 'documents' },
   { label: 'Atividade', key: 'activity' },
+  { label: 'Relatorios', key: 'reports' },
 ]
 
-const CLIENT_TABS = [
+// Abas extras por tipo de projeto (apenas para admin)
+const TYPE_EXTRA_TABS: Record<string, Tab[]> = {
+  automation: [{ label: 'Workflows N8N', key: 'n8n-workflows' }],
+  ai_agent: [{ label: 'Scripts IA', key: 'ai-scripts' }],
+  saas: [],
+}
+
+const CLIENT_TABS: Tab[] = [
   { label: 'Visao Geral', key: '' },
   { label: 'Tarefas', key: 'tasks' },
   { label: 'Aprovacoes', key: 'approvals' },
@@ -30,7 +40,15 @@ const CLIENT_TABS = [
 
 const UNREAD_THRESHOLD_MS = 12 * 60 * 60 * 1000
 
-export function ProjectTabs({ projectId, isAdmin }: { projectId: string; isAdmin?: boolean }) {
+export function ProjectTabs({
+  projectId,
+  isAdmin,
+  projectType,
+}: {
+  projectId: string
+  isAdmin?: boolean
+  projectType?: string | null
+}) {
   const pathname = usePathname()
   const base = `/projects/${projectId}`
   const [hasUnread, setHasUnread] = useState(false)
@@ -53,8 +71,9 @@ export function ProjectTabs({ projectId, isAdmin }: { projectId: string; isAdmin
     queueMicrotask(() => setHasUnread(elapsed > UNREAD_THRESHOLD_MS))
   }, [pathname, base, projectId])
 
+  const typeExtras = projectType ? (TYPE_EXTRA_TABS[projectType] ?? []) : []
   const tabs = isAdmin
-    ? [...ADMIN_TABS, { label: 'Produtividade', key: 'productivity' }]
+    ? [...BASE_ADMIN_TABS, ...typeExtras, { label: 'Produtividade', key: 'productivity' }]
     : CLIENT_TABS
 
   return (

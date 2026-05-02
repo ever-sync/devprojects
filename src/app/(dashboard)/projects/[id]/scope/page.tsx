@@ -17,7 +17,7 @@ export default async function ProjectScopePage({ params }: Props) {
 
   const [{ data: profile }, { data: project }] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
-    supabase.from('projects').select('id, name').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type').eq('id', id).single(),
   ])
 
   if (!project) notFound()
@@ -38,7 +38,7 @@ export default async function ProjectScopePage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <ScopeManagement
         projectId={id}

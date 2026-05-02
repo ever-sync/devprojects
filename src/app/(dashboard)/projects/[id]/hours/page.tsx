@@ -17,7 +17,7 @@ export default async function ProjectHoursPage({ params }: Props) {
 
   const [{ data: profile }, { data: project }, { data: tasks }, entriesRes] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
-    supabase.from('projects').select('id, name').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type').eq('id', id).single(),
     supabase.from('tasks').select('id, title').eq('project_id', id).order('title'),
     getProjectTimeEntries(id),
   ])
@@ -37,7 +37,7 @@ export default async function ProjectHoursPage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       <TimeEntriesPanel
         projectId={id}

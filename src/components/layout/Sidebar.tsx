@@ -18,6 +18,7 @@ import {
   ChevronsRight,
   BarChart3,
   FileBadge,
+  ListChecks,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
@@ -57,6 +58,12 @@ const mainNavItems: NavItem[] = [
     label: 'Clientes',
     href: '/clients',
     icon: <Users className="w-4 h-4 shrink-0" />,
+    adminOnly: true,
+  },
+  {
+    label: 'Delegações',
+    href: '/delegations',
+    icon: <ListChecks className="w-4 h-4 shrink-0" />,
     adminOnly: true,
   },
 ]

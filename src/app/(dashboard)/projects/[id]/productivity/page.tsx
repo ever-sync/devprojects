@@ -28,7 +28,7 @@ export default async function ProductivityPage({ params }: Props) {
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name')
+    .select('id, name, type')
     .eq('id', id)
     .single()
 
@@ -62,7 +62,7 @@ export default async function ProductivityPage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={true} />
+      <ProjectTabs projectId={id} isAdmin={true} projectType={project.type} />
 
       <ProductivityReport
         tasks={(tasks ?? []) as unknown as TaskWithAssignee[]}

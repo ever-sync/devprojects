@@ -19,7 +19,7 @@ export default async function ProjectFinancePage({ params }: Props) {
 
   const [{ data: profile }, { data: project }, financeData, marginData] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
-    supabase.from('projects').select('id, name, workspace_id').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type, workspace_id').eq('id', id).single(),
     getProjectFinanceData(id),
     getProjectMarginData(id),
   ])
@@ -46,7 +46,7 @@ export default async function ProjectFinancePage({ params }: Props) {
         ]}
       />
 
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
 
       {financeData.error ? (
         <EmptyState

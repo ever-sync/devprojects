@@ -17,7 +17,7 @@ export default async function CalendarPage({ params }: Props) {
   if (!user) redirect('/login')
 
   const [{ data: project }, { data: profile }] = await Promise.all([
-    supabase.from('projects').select('id, name').eq('id', id).single(),
+    supabase.from('projects').select('id, name, type').eq('id', id).single(),
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
@@ -51,7 +51,7 @@ export default async function CalendarPage({ params }: Props) {
           { label: 'Calendário' },
         ]}
       />
-      <ProjectTabs projectId={id} isAdmin={isAdmin} />
+      <ProjectTabs projectId={id} isAdmin={isAdmin} projectType={project.type} />
       <CalendarView
         tasks={(tasks ?? []) as Parameters<typeof CalendarView>[0]['tasks']}
         phases={(phases ?? []) as Parameters<typeof CalendarView>[0]['phases']}
