@@ -20,7 +20,7 @@ import type { Client, Project } from '@/types'
 
 interface ProjectFormProps {
   clients: Pick<Client, 'id' | 'name'>[]
-  templates?: { id: string; name: string }[]
+  templates?: { id: string; name: string; project_type?: 'saas' | 'automation' | 'ai_agent' | null }[]
   project?: Project
   defaultClientId?: string
 }
@@ -35,6 +35,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
@@ -60,6 +61,11 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
           progress_percent: 0,
           client_id: defaultClientId,
         },
+  })
+  const selectedType = watch('type')
+  const filteredTemplates = templates.filter((template) => {
+    if (!selectedType) return true
+    return !template.project_type || template.project_type === selectedType
   })
 
   async function onSubmit(data: ProjectInput) {
@@ -163,7 +169,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
           </Select>
         </div>
 
-        {!project && templates.length > 0 && (
+        {!project && filteredTemplates.length > 0 && (
           <div className="space-y-2">
             <Label>Template de Fases</Label>
             <Select onValueChange={setTemplateId}>
@@ -171,7 +177,7 @@ export function ProjectForm({ clients, templates = [], project, defaultClientId 
                 <SelectValue placeholder="Selecione um template (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                {templates.map((t) => (
+                {filteredTemplates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                 ))}
               </SelectContent>

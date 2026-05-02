@@ -1,9 +1,12 @@
-// @ts-nocheck — Tables not yet in database types, will be enabled after migration
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import type { Database } from '@/types/database.types';
 import { revalidatePath } from 'next/cache';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { sendSlackNotification } from '@/lib/slack';
+import { sendDiscordNotification } from '@/lib/discord';
 
 // Schemas de validação
 export const workflowDefinitionSchema = z.object({
@@ -49,6 +52,27 @@ export type WorkflowDefinition = z.infer<typeof workflowDefinitionSchema>;
 export type WebhookEndpoint = z.infer<typeof webhookEndpointSchema>;
 export type ExternalIntegration = z.infer<typeof externalIntegrationSchema>;
 export type ExecuteWorkflowParams = z.infer<typeof executeWorkflowSchema>;
+type JsonObject = Record<string, unknown>;
+type WorkflowStep = {
+  name: string;
+  type: string;
+  config: JsonObject;
+  conditions?: Array<{ field: string; operator: string; value: unknown }>;
+};
+type WorkflowContext = {
+  payload: JsonObject;
+  results: Record<string, unknown>;
+  meta?: {
+    workspace_id?: string;
+    triggered_by?: string | null;
+  };
+};
+type WorkflowExecutionLog = { step: string; status: string; message: string; timestamp: string };
+type SupabaseServerClient = SupabaseClient<Database>;
+type StepExecutionRunResult = {
+  failed: boolean;
+  breakExecution: boolean;
+};
 
 /**
  * Criar um novo workflow
@@ -105,7 +129,7 @@ export async function listWorkflows(workspaceId?: string) {
       .from('workflow_definitions')
       .select(`
         *,
-        creator:user_id (id, email),
+        creator:created_by (id, email),
         executions:workflow_executions (count)
       `)
       .order('created_at', { ascending: false });
@@ -139,7 +163,7 @@ export async function getWorkflow(workflowId: string) {
       .from('workflow_definitions')
       .select(`
         *,
-        creator:user_id (id, email),
+        creator:created_by (id, email),
         executions:workflow_executions (
           id,
           status,
@@ -255,6 +279,9 @@ export async function executeWorkflow(params: ExecuteWorkflowParams) {
   try {
     const validatedData = executeWorkflowSchema.parse(params);
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     // Criar execução
     const { data: execution, error: execError } = await supabase
@@ -262,7 +289,7 @@ export async function executeWorkflow(params: ExecuteWorkflowParams) {
       .insert({
         workflow_id: validatedData.workflow_id,
         status: 'pending',
-        triggered_by: (await supabase.auth.getUser()).data.user?.id,
+        triggered_by: user?.id,
         trigger_payload: validatedData.trigger_payload || {}
       })
       .select()
@@ -273,18 +300,13 @@ export async function executeWorkflow(params: ExecuteWorkflowParams) {
     // Obter definição do workflow
     const { data: workflow, error: wfError } = await supabase
       .from('workflow_definitions')
-      .select('steps')
+      .select('steps, workspace_id')
       .eq('id', validatedData.workflow_id)
       .single();
 
     if (wfError || !workflow) throw new Error('Workflow nao encontrado');
 
-    const steps = (workflow.steps || []) as Array<{
-      name: string;
-      type: string;
-      config: Record<string, any>;
-      conditions?: Array<{ field: string; operator: string; value: any }>;
-    }>;
+    const steps = (workflow.steps || []) as WorkflowStep[];
 
     // Atualizar para running
     await supabase
@@ -296,75 +318,29 @@ export async function executeWorkflow(params: ExecuteWorkflowParams) {
       .eq('id', execution.id);
 
     // Executar steps sequencialmente
-    const logs: Array<{ step: string; status: string; message: string; timestamp: string }> = [];
-    let context: Record<string, any> = {
-      payload: validatedData.trigger_payload || {},
+    const logs: WorkflowExecutionLog[] = [];
+    const context: WorkflowContext = {
+      payload: (validatedData.trigger_payload || {}) as JsonObject,
       results: {},
+      meta: {
+        workspace_id: workflow.workspace_id,
+        triggered_by: user?.id ?? null,
+      },
     };
     let failed = false;
 
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
-
-      // Registrar step execution como running
-      const { data: stepExec } = await supabase
-        .from('workflow_step_executions')
-        .insert({
-          execution_id: execution.id,
-          step_index: i,
-          step_name: step.name,
-          step_type: step.type,
-          status: 'running',
-          input_data: { config: step.config, context },
-          started_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      try {
-        // Verificar condicoes do step
-        if (step.conditions && step.conditions.length > 0) {
-          const conditionsMet = evaluateConditions(step.conditions, context);
-          if (!conditionsMet) {
-            await supabase
-              .from('workflow_step_executions')
-              .update({ status: 'skipped', completed_at: new Date().toISOString() })
-              .eq('id', stepExec?.id);
-            logs.push({ step: step.name, status: 'skipped', message: 'Condicoes nao atendidas', timestamp: new Date().toISOString() });
-            continue;
-          }
-        }
-
-        // Executar o step
-        const result = await executeStep(supabase, step, context);
-        context.results[step.name] = result;
-
-        await supabase
-          .from('workflow_step_executions')
-          .update({
-            status: 'completed',
-            output_data: result,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', stepExec?.id);
-
-        logs.push({ step: step.name, status: 'completed', message: 'Executado com sucesso', timestamp: new Date().toISOString() });
-      } catch (stepError) {
-        const errorMsg = stepError instanceof Error ? stepError.message : 'Erro desconhecido';
-
-        await supabase
-          .from('workflow_step_executions')
-          .update({
-            status: 'failed',
-            error_message: errorMsg,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', stepExec?.id);
-
-        logs.push({ step: step.name, status: 'failed', message: errorMsg, timestamp: new Date().toISOString() });
-        failed = true;
-        break;
-      }
+      const runResult = await runWorkflowStep({
+        supabase,
+        executionId: execution.id,
+        step,
+        stepIndex: i,
+        context,
+        logs,
+      });
+      if (runResult.failed) failed = true;
+      if (runResult.breakExecution) break;
     }
 
     // Finalizar execucao
@@ -390,6 +366,96 @@ export async function executeWorkflow(params: ExecuteWorkflowParams) {
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Erro ao executar workflow' 
+    };
+  }
+}
+
+export async function rerunWorkflowFromFailedStep(executionId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { data: execution } = await supabase
+      .from('workflow_executions')
+      .select('id, workflow_id, trigger_payload')
+      .eq('id', executionId)
+      .single();
+
+    if (!execution) return { success: false, error: 'Execucao nao encontrada' };
+
+    const { data: workflow } = await supabase
+      .from('workflow_definitions')
+      .select('id, steps, workspace_id')
+      .eq('id', execution.workflow_id)
+      .single();
+
+    if (!workflow) return { success: false, error: 'Workflow nao encontrado' };
+
+    const { data: failedStep } = await supabase
+      .from('workflow_step_executions')
+      .select('step_index')
+      .eq('execution_id', execution.id)
+      .eq('status', 'failed')
+      .order('step_index', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!failedStep) return { success: false, error: 'Nenhum step falho encontrado para reexecucao' };
+
+    const steps = (workflow.steps || []) as WorkflowStep[];
+    const logs: WorkflowExecutionLog[] = [];
+    const context: WorkflowContext = {
+      payload: (execution.trigger_payload || {}) as JsonObject,
+      results: {},
+      meta: { workspace_id: workflow.workspace_id },
+    };
+
+    const { data: replayExecution, error: replayError } = await supabase
+      .from('workflow_executions')
+      .insert({
+        workflow_id: workflow.id,
+        status: 'running',
+        trigger_payload: execution.trigger_payload || {},
+        started_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (replayError || !replayExecution) {
+      return { success: false, error: replayError?.message ?? 'Falha ao criar reexecucao' };
+    }
+
+    let failed = false;
+    for (let i = failedStep.step_index; i < steps.length; i++) {
+      const step = steps[i];
+      const runResult = await runWorkflowStep({
+        supabase,
+        executionId: replayExecution.id,
+        step,
+        stepIndex: i,
+        context,
+        logs,
+      });
+      if (runResult.failed) failed = true;
+      if (runResult.breakExecution) break;
+    }
+
+    await supabase
+      .from('workflow_executions')
+      .update({
+        status: failed ? 'failed' : 'completed',
+        completed_at: new Date().toISOString(),
+        error_message: failed ? logs[logs.length - 1]?.message : null,
+        logs,
+      })
+      .eq('id', replayExecution.id);
+
+    revalidatePath(`/workflows/${workflow.id}`);
+    return { success: true, data: replayExecution, logs };
+  } catch (error) {
+    console.error('Erro ao reexecutar workflow:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro ao reexecutar workflow',
     };
   }
 }
@@ -610,20 +676,20 @@ export async function loadAutomationTemplates(category?: string) {
 
 // ── Helpers para execucao de workflow ──
 
-function resolveTemplate(template: string, context: Record<string, any>): string {
+function resolveTemplate(template: string, context: WorkflowContext | JsonObject): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (_, path: string) => {
     const keys = path.trim().split('.');
-    let value: any = context;
+    let value: unknown = context;
     for (const key of keys) {
-      if (value == null) return '';
-      value = value[key];
+      if (value == null || typeof value !== 'object') return '';
+      value = (value as Record<string, unknown>)[key];
     }
     return value != null ? String(value) : '';
   });
 }
 
-function resolveConfig(config: Record<string, any>, context: Record<string, any>): Record<string, any> {
-  const resolved: Record<string, any> = {};
+function resolveConfig(config: JsonObject, context: WorkflowContext): JsonObject {
+  const resolved: JsonObject = {};
   for (const [key, value] of Object.entries(config)) {
     if (typeof value === 'string') {
       resolved[key] = resolveTemplate(value, context);
@@ -639,8 +705,8 @@ function resolveConfig(config: Record<string, any>, context: Record<string, any>
 }
 
 function evaluateConditions(
-  conditions: Array<{ field: string; operator: string; value: any }>,
-  context: Record<string, any>
+  conditions: Array<{ field: string; operator: string; value: unknown }>,
+  context: WorkflowContext
 ): boolean {
   return conditions.every((condition) => {
     const fieldValue = resolveTemplate(`{{${condition.field}}}`, context);
@@ -670,10 +736,10 @@ function evaluateConditions(
 }
 
 async function executeStep(
-  supabase: any,
-  step: { name: string; type: string; config: Record<string, any> },
-  context: Record<string, any>
-): Promise<Record<string, any>> {
+  supabase: SupabaseServerClient,
+  step: WorkflowStep,
+  context: WorkflowContext
+): Promise<JsonObject> {
   const config = resolveConfig(step.config, context);
 
   switch (step.type) {
@@ -685,32 +751,32 @@ async function executeStep(
       return { condition_met: true };
 
     case 'task_create': {
-      const { data: member } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .limit(1)
-        .single();
-
-      if (!member) throw new Error('Workspace nao encontrado para criar tarefa');
+      const workspaceId = context.meta?.workspace_id
+      if (!workspaceId) throw new Error('Workspace nao encontrado para criar tarefa');
 
       // Buscar primeiro projeto do workspace como fallback
       const { data: project } = await supabase
         .from('projects')
         .select('id')
-        .eq('workspace_id', member.workspace_id)
+        .eq('workspace_id', workspaceId)
         .limit(1)
         .single();
 
       if (!project) throw new Error('Nenhum projeto encontrado para criar tarefa');
 
+      const taskTitle = typeof config.title === 'string' ? config.title : 'Tarefa automatica';
+      const taskDescription = typeof config.description === 'string' ? config.description : '';
+      const taskPriority = typeof config.priority === 'string' ? config.priority : 'medium';
+      const projectId = typeof config.project_id === 'string' ? config.project_id : project.id;
+
       const { data: task, error } = await supabase
         .from('tasks')
         .insert({
-          project_id: config.project_id || project.id,
-          title: config.title || 'Tarefa automatica',
-          description: config.description || '',
+          project_id: projectId,
+          title: taskTitle,
+          description: taskDescription,
           status: 'todo',
-          priority: config.priority || 'medium',
+          priority: taskPriority,
         })
         .select('id, title')
         .single();
@@ -720,21 +786,30 @@ async function executeStep(
     }
 
     case 'project_create': {
-      const { data: member } = await supabase
-        .from('workspace_members')
-        .select('workspace_id')
-        .limit(1)
-        .single();
+      const workspaceId = context.meta?.workspace_id
+      if (!workspaceId) throw new Error('Workspace nao encontrado');
 
-      if (!member) throw new Error('Workspace nao encontrado');
+      const projectName = typeof config.name === 'string' ? config.name : 'Projeto automatico';
+      const projectDescription = typeof config.description === 'string' ? config.description : '';
+      let clientId = typeof config.client_id === 'string' ? config.client_id : null;
+      if (!clientId) {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('workspace_id', workspaceId)
+          .limit(1)
+          .single();
+        clientId = client?.id ?? null;
+      }
+      if (!clientId) throw new Error('Nenhum cliente encontrado para criar projeto');
 
       const { data: project, error } = await supabase
         .from('projects')
         .insert({
-          workspace_id: member.workspace_id,
-          name: config.name || 'Projeto automatico',
-          description: config.description || '',
-          client_id: config.client_id || null,
+          workspace_id: workspaceId,
+          name: projectName,
+          description: projectDescription,
+          client_id: clientId,
           status: 'active',
           type: 'saas',
         })
@@ -745,14 +820,47 @@ async function executeStep(
       return { project_id: project.id, name: project.name };
     }
 
-    case 'slack_message':
-      // Enviar via webhook do Slack (requer integracao configurada)
+    case 'slack_message': {
+      const projectId = typeof config.project_id === 'string'
+        ? config.project_id
+        : typeof context.payload.project_id === 'string'
+        ? context.payload.project_id
+        : undefined;
+      const message = typeof config.message === 'string' ? config.message : '';
+      const channel = typeof config.channel === 'string' ? config.channel : undefined;
+      const result = await sendSlackNotification({
+        projectId,
+        title: channel ? `Workflow Slack (${channel})` : 'Workflow Slack',
+        body: message || 'Mensagem enviada por workflow',
+      });
       return {
-        sent: true,
-        channel: config.channel,
-        message: config.message,
-        note: 'Requer webhook do Slack configurado na integracao externa',
+        sent: result.sent,
+        reason: result.reason,
+        channel,
+        message,
       };
+    }
+
+    case 'discord_message': {
+      const projectId = typeof config.project_id === 'string'
+        ? config.project_id
+        : typeof context.payload.project_id === 'string'
+        ? context.payload.project_id
+        : undefined;
+      const message = typeof config.message === 'string' ? config.message : '';
+      const channel = typeof config.channel === 'string' ? config.channel : undefined;
+      const result = await sendDiscordNotification({
+        projectId,
+        title: channel ? `Workflow Discord (${channel})` : 'Workflow Discord',
+        body: message || 'Mensagem enviada por workflow',
+      });
+      return {
+        sent: result.sent,
+        reason: result.reason,
+        channel,
+        message,
+      };
+    }
 
     case 'email_send':
       return {
@@ -772,19 +880,22 @@ async function executeStep(
       };
 
     case 'data_export': {
-      const tables = config.tables || [];
-      const exportData: Record<string, any> = {};
+      const tables = Array.isArray(config.tables)
+        ? config.tables.filter((table): table is string => typeof table === 'string')
+        : [];
+      const exportData: Record<string, unknown[]> = {};
 
       for (const table of tables) {
-        const { data, error } = await supabase.from(table).select('*').limit(1000);
+        const { data, error } = await supabase.from(table as never).select('*').limit(1000);
         if (!error && data) {
           exportData[table] = data;
         }
       }
 
-      return { exported_tables: tables, row_counts: Object.fromEntries(
-        Object.entries(exportData).map(([k, v]: [string, any]) => [k, v.length])
-      )};
+      return {
+        exported_tables: tables,
+        row_counts: Object.fromEntries(Object.entries(exportData).map(([k, v]) => [k, v.length])),
+      };
     }
 
     case 'storage_upload':
@@ -807,4 +918,106 @@ async function executeStep(
     default:
       return { type: step.type, status: 'executed', config };
   }
+}
+
+async function runWorkflowStep(params: {
+  supabase: SupabaseServerClient;
+  executionId: string;
+  step: WorkflowStep;
+  stepIndex: number;
+  context: WorkflowContext;
+  logs: WorkflowExecutionLog[];
+}): Promise<StepExecutionRunResult> {
+  const { supabase, executionId, step, stepIndex, context, logs } = params;
+  const nowIso = new Date().toISOString();
+  const retryCountRaw = (step.config.retry_count as number | undefined) ?? 0;
+  const retryCount = Number.isFinite(retryCountRaw) ? Math.max(0, Math.floor(retryCountRaw)) : 0;
+
+  const { data: stepExec } = await supabase
+    .from('workflow_step_executions')
+    .insert({
+      execution_id: executionId,
+      step_index: stepIndex,
+      step_name: step.name,
+      step_type: step.type,
+      status: 'running',
+      input_data: { config: step.config, context } as Database['public']['Tables']['workflow_step_executions']['Insert']['input_data'],
+      started_at: nowIso,
+    })
+    .select()
+    .single();
+
+  if (!stepExec) {
+    throw new Error(`Falha ao registrar execução do step ${step.name}`);
+  }
+
+  if (step.conditions && step.conditions.length > 0) {
+    const conditionsMet = evaluateConditions(step.conditions, context);
+    if (!conditionsMet) {
+      await supabase
+        .from('workflow_step_executions')
+        .update({ status: 'skipped', completed_at: new Date().toISOString() })
+        .eq('id', stepExec.id);
+      logs.push({ step: step.name, status: 'skipped', message: 'Condicoes nao atendidas', timestamp: new Date().toISOString() });
+      return { failed: false, breakExecution: false };
+    }
+  }
+
+  let attempt = 0;
+  let lastError = '';
+  while (attempt <= retryCount) {
+    attempt += 1;
+    try {
+      const result = await executeStep(supabase, step, context);
+      context.results[step.name] = result;
+
+      await supabase
+        .from('workflow_step_executions')
+        .update({
+          status: 'completed',
+          output_data: {
+            result,
+            attempts: attempt,
+            retry_count: retryCount,
+          } as Database['public']['Tables']['workflow_step_executions']['Update']['output_data'],
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', stepExec.id);
+
+      logs.push({
+        step: step.name,
+        status: 'completed',
+        message: attempt > 1 ? `Executado com sucesso após ${attempt} tentativas` : 'Executado com sucesso',
+        timestamp: new Date().toISOString(),
+      });
+      return { failed: false, breakExecution: false };
+    } catch (stepError) {
+      lastError = stepError instanceof Error ? stepError.message : 'Erro desconhecido';
+      if (attempt <= retryCount) {
+        logs.push({
+          step: step.name,
+          status: 'retry',
+          message: `Tentativa ${attempt} falhou: ${lastError}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  await supabase
+    .from('workflow_step_executions')
+    .update({
+      status: 'failed',
+      error_message: lastError,
+      output_data: {
+        attempts: attempt,
+        retry_count: retryCount,
+        last_error: lastError,
+      } as Database['public']['Tables']['workflow_step_executions']['Update']['output_data'],
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', stepExec.id);
+
+  logs.push({ step: step.name, status: 'failed', message: lastError, timestamp: new Date().toISOString() });
+  return { failed: true, breakExecution: true };
 }

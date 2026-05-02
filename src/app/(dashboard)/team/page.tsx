@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -5,10 +6,21 @@ import { Avatar } from '@/components/shared/Avatar'
 import { RoleBadge } from '@/components/shared/RoleBadge'
 import { InviteUserForm } from '@/components/team/InviteUserForm'
 import { TeamRatesPanel } from '@/components/team/TeamRatesPanel'
+import { CapacityPlanningPanel } from '@/components/team/CapacityPlanningPanel'
+import { ResourceAllocationBoard } from '@/components/team/ResourceAllocationBoard'
 import { Badge } from '@/components/ui/badge'
 import type { UserRole } from '@/types'
+import { getCapacityPlanningData, getResourceAllocationData } from '@/actions/execution'
 
-export default async function TeamPage() {
+interface TeamPageProps {
+  searchParams: Promise<{ member?: string; period?: string }>
+}
+
+export default async function TeamPage({ searchParams }: TeamPageProps) {
+  const params = await searchParams
+  const focusedMemberId = params.member ?? null
+  const allowedHorizonWeeks = new Set(['2', '4', '8', '12'])
+  const horizonWeeks = allowedHorizonWeeks.has(params.period ?? '') ? Number(params.period) : 4
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -36,6 +48,9 @@ export default async function TeamPage() {
     .from('workspace_members')
     .select('id, workspace_id, role, profiles!workspace_members_user_id_fkey(id, full_name, email, avatar_url, role)')
 
+  const capacityPlanning = await getCapacityPlanningData(horizonWeeks)
+  const resourceAllocation = await getResourceAllocationData()
+
   const workspaceNames = new Map((clients ?? []).map((client) => [client.workspace_id, client.name]))
   const clientWorkspaceMembers = (workspaceMembers ?? [])
     .filter((member) => {
@@ -56,6 +71,12 @@ export default async function TeamPage() {
         title="Equipe e usuarios"
         description="Gerencie equipe interna, membros de workspace e parametros de custo."
       />
+
+      {focusedMemberId && (
+        <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          Filtro ativo por membro. <Link className="underline" href="/team">Limpar foco</Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div>
@@ -137,6 +158,57 @@ export default async function TeamPage() {
       <div className="mt-8">
         <h3 className="mb-4 text-sm font-semibold text-foreground">Custo interno e bill rate</h3>
         <TeamRatesPanel profiles={(profiles ?? []).filter((person) => person.role === 'admin')} />
+      </div>
+
+      <div className="mt-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Capacity planning ({horizonWeeks} semanas)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {[2, 4, 8, 12].map((weeks) => {
+              const isActive = weeks === horizonWeeks
+              const periodHref = focusedMemberId
+                ? `/team?period=${weeks}&member=${focusedMemberId}`
+                : `/team?period=${weeks}`
+              return (
+                <Link
+                  key={weeks}
+                  href={periodHref}
+                  className={`rounded-md border px-3 py-1 text-xs transition ${
+                    isActive
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {weeks} sem
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+        {capacityPlanning.error || !capacityPlanning.data ? (
+          <div className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+            Nao foi possivel carregar capacity planning: {capacityPlanning.error ?? 'erro desconhecido'}
+          </div>
+        ) : (
+          <CapacityPlanningPanel {...capacityPlanning.data} focusedMemberId={focusedMemberId} />
+        )}
+      </div>
+
+      <div className="mt-8">
+        <h3 className="mb-4 text-sm font-semibold text-foreground">Alocacao visual de recursos</h3>
+        {resourceAllocation.error || !resourceAllocation.data ? (
+          <div className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+            Nao foi possivel carregar quadro de alocacao: {resourceAllocation.error ?? 'erro desconhecido'}
+          </div>
+        ) : (
+          <ResourceAllocationBoard
+            teamMembers={resourceAllocation.data.teamMembers}
+            tasks={resourceAllocation.data.tasks}
+            focusedMemberId={focusedMemberId}
+          />
+        )}
       </div>
     </div>
   )

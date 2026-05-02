@@ -608,11 +608,21 @@ export async function deleteProposal(proposalId: string) {
  * Get proposal templates
  */
 export async function getProposalTemplates() {
+  const commonVariables = [
+    { key: 'client_name', label: 'Nome do Cliente', placeholder: 'Ex: Acme LTDA' },
+    { key: 'project_name', label: 'Nome do Projeto', placeholder: 'Ex: Portal de Atendimento' },
+    { key: 'project_goal', label: 'Objetivo Principal', placeholder: 'Ex: reduzir tempo de resposta em 40%' },
+  ];
+
   const templates = [
     {
       id: 'website-basic',
       name: 'Site Institucional Básico',
       description: 'Template para sites institucionais de pequeno porte',
+      titleTemplate: 'Proposta {{project_name}} - {{client_name}}',
+      descriptionTemplate:
+        'Implementação do projeto {{project_name}} para {{client_name}} com foco em {{project_goal}}.',
+      variables: commonVariables,
       defaultPhases: [
         { title: 'Descoberta e Planejamento', duration_days: 5, estimated_hours: 20 },
         { title: 'Design e Prototipagem', duration_days: 10, estimated_hours: 40 },
@@ -628,6 +638,10 @@ export async function getProposalTemplates() {
       id: 'automation-zapier',
       name: 'Automação com Zapier/n8n',
       description: 'Template para projetos de automação de processos',
+      titleTemplate: 'Automação {{project_name}} - {{client_name}}',
+      descriptionTemplate:
+        'Projeto de automação {{project_name}} para {{client_name}}, orientado a {{project_goal}}.',
+      variables: commonVariables,
       defaultPhases: [
         { title: 'Mapeamento de Processos', duration_days: 3, estimated_hours: 15 },
         { title: 'Configuração de Automações', duration_days: 10, estimated_hours: 40 },
@@ -642,6 +656,10 @@ export async function getProposalTemplates() {
       id: 'ecommerce-complete',
       name: 'E-commerce Completo',
       description: 'Template para lojas virtuais completas',
+      titleTemplate: 'E-commerce {{project_name}} - {{client_name}}',
+      descriptionTemplate:
+        'Construção do e-commerce {{project_name}} para {{client_name}} visando {{project_goal}}.',
+      variables: commonVariables,
       defaultPhases: [
         { title: 'Planejamento e Arquitetura', duration_days: 7, estimated_hours: 30 },
         { title: 'Design da Experiência', duration_days: 14, estimated_hours: 60 },

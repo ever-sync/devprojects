@@ -46,7 +46,8 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-1">Acessar Portal</h2>
         <p className="text-sm text-muted-foreground">Entre com suas credenciais para continuar.</p>
@@ -95,6 +96,7 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Entrando...' : 'Entrar'}
       </Button>
+      </form>
 
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
@@ -116,6 +118,6 @@ export function LoginForm() {
           Entrar com Google
         </Button>
       </form>
-    </form>
+    </div>
   )
 }

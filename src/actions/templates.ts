@@ -6,6 +6,7 @@ import type { Database } from '@/types/database.types'
 
 type PhaseTemplate = Database['public']['Tables']['phase_templates']['Row']
 type PhaseTemplateInsert = Database['public']['Tables']['phase_templates']['Insert']
+type ProjectType = 'saas' | 'automation' | 'ai_agent'
 
 export async function getTemplates() {
   const supabase = await createClient()
@@ -18,13 +19,14 @@ export async function getTemplates() {
   return { data, error: null }
 }
 
-export async function createTemplate(data: PhaseTemplateInsert & { items: string[] }) {
+export async function createTemplate(data: PhaseTemplateInsert & { items: string[]; project_type?: ProjectType | null }) {
   const supabase = await createClient()
   const { data: template, error: tError } = await supabase
     .from('phase_templates')
     .insert({
       name: data.name,
       description: data.description,
+      project_type: data.project_type ?? null,
     })
     .select()
     .single()
@@ -57,6 +59,7 @@ export async function updateTemplate(id: string, data: Partial<PhaseTemplate> & 
     .update({
       name: data.name,
       description: data.description,
+      project_type: data.project_type,
     })
     .eq('id', id)
 

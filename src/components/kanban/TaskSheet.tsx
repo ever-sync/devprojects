@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { taskSchema, type TaskInput } from '@/lib/validations'
 import { deleteTask, getTaskImageUrl, updateTask, uploadTaskImage } from '@/actions/tasks'
+import { getActiveTaskTimer, startTaskTimer, stopTaskTimer } from '@/actions/time-entries'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,13 @@ const TASK_CATEGORY_OPTIONS = [
   { value: 'saas', label: 'SaaS' },
   { value: 'automation', label: 'Automacao' },
   { value: 'other', label: 'Outras' },
+] as const
+const RECURRING_OPTIONS = [
+  { value: 'none', label: 'Nao recorrente' },
+  { value: 'daily', label: 'Diaria' },
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'biweekly', label: 'Quinzenal' },
+  { value: 'monthly', label: 'Mensal' },
 ] as const
 
 interface TaskSheetProps {
@@ -68,6 +76,11 @@ export function TaskSheet({
   const [currentAssigneeId, setCurrentAssigneeId] = useState(task?.assignee_id ?? 'none')
   const [currentStatus, setCurrentStatus] = useState<TaskInput['status']>((task?.status ?? 'todo') as TaskInput['status'])
   const [currentPriority, setCurrentPriority] = useState<TaskInput['priority']>((task?.priority ?? 'medium') as TaskInput['priority'])
+  const [currentRecurringPattern, setCurrentRecurringPattern] = useState<string>(
+    ((task as (Task & { recurring_pattern?: string | null }) | null)?.recurring_pattern ?? 'none'),
+  )
+  const [isTimerLoading, setIsTimerLoading] = useState(false)
+  const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null)
 
   const { register, handleSubmit, setValue, reset } = useForm<TaskInput>({
     resolver: zodResolver(taskSchema),
@@ -87,6 +100,8 @@ export function TaskSheet({
       detail_notes: (task as (Task & { detail_notes?: string | null }) | null)?.detail_notes ?? undefined,
       image_path: (task as (Task & { image_path?: string | null }) | null)?.image_path ?? undefined,
       task_category: initialCategory,
+      recurring_pattern: ((task as (Task & { recurring_pattern?: string | null }) | null)?.recurring_pattern ?? null) as TaskInput['recurring_pattern'],
+      recurring_interval_days: ((task as (Task & { recurring_interval_days?: number | null }) | null)?.recurring_interval_days ?? undefined) as TaskInput['recurring_interval_days'],
       mentioned_user_ids: initialMentions,
       checklist: initialChecklist,
     },
@@ -102,6 +117,14 @@ export function TaskSheet({
       if (!result.error) setImageUrl(result.url)
     })
   }, [task])
+
+  useEffect(() => {
+    if (!task || !open) return
+    getActiveTaskTimer(projectId).then((result) => {
+      if (result.error) return
+      setActiveTimerTaskId(result.timer?.task_id ?? null)
+    })
+  }, [projectId, task, open])
 
   const statusLabel = task ? TASK_STATUS_LABELS[task.status] ?? task.status : ''
   const priorityLabel = task ? TASK_PRIORITY_CONFIG[task.priority]?.label ?? task.priority : ''
@@ -167,6 +190,26 @@ export function TaskSheet({
     onOpenChange(false)
   }
 
+  const isCurrentTaskRunning = activeTimerTaskId === task.id
+
+  async function handleStartTimer() {
+    setIsTimerLoading(true)
+    const result = await startTaskTimer(projectId, task.id, `Timer iniciado pela task "${task.title}"`)
+    setIsTimerLoading(false)
+    if (result?.error) return toast.error(result.error)
+    setActiveTimerTaskId(task.id)
+    toast.success(result.alreadyRunning ? 'Timer ja estava em execucao nesta task.' : 'Timer iniciado com sucesso.')
+  }
+
+  async function handleStopTimer() {
+    setIsTimerLoading(true)
+    const result = await stopTaskTimer(projectId, task.id)
+    setIsTimerLoading(false)
+    if (result?.error) return toast.error(result.error)
+    setActiveTimerTaskId(null)
+    toast.success(`Timer finalizado. ${result.hours}h registradas.`)
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="dashboard-surface w-full sm:max-w-xl overflow-y-auto flex flex-col gap-0 p-0">
@@ -198,6 +241,30 @@ export function TaskSheet({
                 <SelectField label="Status"><Select value={currentStatus} onValueChange={(v) => { setCurrentStatus(v as TaskInput['status']); setValue('status', v as TaskInput['status']) }} disabled={!isAdmin}><SelectTrigger className="h-12 rounded-2xl border-border/70 bg-background px-4"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(TASK_STATUS_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></SelectField>
                 <SelectField label="Prioridade"><Select value={currentPriority} onValueChange={(v) => { setCurrentPriority(v as TaskInput['priority']); setValue('priority', v as TaskInput['priority']) }} disabled={!isAdmin}><SelectTrigger className="h-12 rounded-2xl border-border/70 bg-background px-4"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(TASK_PRIORITY_CONFIG).map(([v, c]) => <SelectItem key={v} value={v}>{c.label}</SelectItem>)}</SelectContent></Select></SelectField>
                 <SelectField label="Categoria"><Select value={currentCategory} onValueChange={(v) => { setCurrentCategory(v as TaskInput['task_category']); setValue('task_category', v as TaskInput['task_category']) }} disabled={!isAdmin}><SelectTrigger className="h-12 rounded-2xl border-border/70 bg-background px-4"><SelectValue /></SelectTrigger><SelectContent>{TASK_CATEGORY_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select></SelectField>
+                <SelectField label="Recorrencia">
+                  <Select
+                    value={currentRecurringPattern}
+                    onValueChange={(v) => {
+                      setCurrentRecurringPattern(v)
+                      const pattern = v === 'none' ? null : (v as NonNullable<TaskInput['recurring_pattern']>)
+                      setValue('recurring_pattern', pattern)
+                      const interval = v === 'daily' ? 1 : v === 'weekly' ? 7 : v === 'biweekly' ? 14 : v === 'monthly' ? 30 : null
+                      setValue('recurring_interval_days', interval)
+                    }}
+                    disabled={!isAdmin}
+                  >
+                    <SelectTrigger className="h-12 rounded-2xl border-border/70 bg-background px-4">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RECURRING_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SelectField>
                 <SelectField label="Fase da timeline"><Select value={currentPhaseId} onValueChange={(v) => { setCurrentPhaseId(v); setValue('phase_id', v === 'none' ? undefined : v) }} disabled={!isAdmin}><SelectTrigger className="h-12 rounded-2xl border-border/70 bg-background px-4"><SelectValue placeholder="Sem fase vinculada" /></SelectTrigger><SelectContent><SelectItem value="none">Sem fase vinculada</SelectItem>{phases.map((phase) => <SelectItem key={phase.id} value={phase.id}>{phase.name}</SelectItem>)}</SelectContent></Select></SelectField>
                 <Field label="Data limite" className="sm:col-span-2"><Input type="date" {...register('due_date')} disabled={!isAdmin} className="h-12 rounded-2xl border-border/70 bg-background px-4" /></Field>
               </div>
@@ -224,6 +291,43 @@ export function TaskSheet({
             </CardSection>
 
             <CardSection title="Colaboradores, horas e bloqueios" description="Defina ownership, mencoes e contexto de execucao da tarefa.">
+              {isAdmin && (
+                <div className="rounded-2xl border border-border/70 bg-background p-3">
+                  <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    Timer operacional da tarefa
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      className="h-10 rounded-xl"
+                      disabled={isTimerLoading || isCurrentTaskRunning || (activeTimerTaskId !== null && activeTimerTaskId !== task.id)}
+                      onClick={handleStartTimer}
+                    >
+                      {isTimerLoading && !isCurrentTaskRunning ? 'Iniciando...' : 'Iniciar timer'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 rounded-xl"
+                      disabled={isTimerLoading || !isCurrentTaskRunning}
+                      onClick={handleStopTimer}
+                    >
+                      {isTimerLoading && isCurrentTaskRunning ? 'Finalizando...' : 'Parar timer'}
+                    </Button>
+                    {isCurrentTaskRunning && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+                        Rodando nesta tarefa
+                      </span>
+                    )}
+                    {activeTimerTaskId && activeTimerTaskId !== task.id && (
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+                        Voce ja possui timer ativo em outra tarefa
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Field label="Estimado"><div className="relative"><Clock3 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input type="number" step="0.5" {...register('estimated_hours', { valueAsNumber: true })} className="h-12 rounded-2xl border-border/70 bg-background pl-11 pr-4" /></div></Field>
                 <Field label="Executado"><div className="relative"><Clock3 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input type="number" step="0.5" {...register('actual_hours', { valueAsNumber: true })} className="h-12 rounded-2xl border-border/70 bg-background pl-11 pr-4" /></div></Field>

@@ -10,6 +10,7 @@ import { ActivityTimeline } from '@/components/activity/ActivityTimeline'
 import { PublicApprovalPanel } from '@/components/public/PublicApprovalPanel'
 import { PublicDocumentList } from '@/components/public/PublicDocumentList'
 import { PublicProjectOverview } from '@/components/public/PublicProjectOverview'
+import { PublicScopePanel } from '@/components/public/PublicScopePanel'
 import { PublicTaskPanel } from '@/components/public/PublicTaskPanel'
 import { GanttView } from '@/components/timeline/GanttView'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -20,6 +21,7 @@ import {
   Calendar,
   CheckSquare,
   ClipboardCheck,
+  FileText,
   FolderOpen,
   History,
   LayoutGrid,
@@ -46,7 +48,15 @@ export default async function PublicProjectPage({ params }: Props) {
 
   const supabase = createAdminClient()
 
-  const [activitiesRes, tasksRes, documentsRes, approvalsRes, { data: phases }] = await Promise.all([
+  const [
+    activitiesRes,
+    tasksRes,
+    documentsRes,
+    approvalsRes,
+    { data: phases },
+    { data: scopeVersions },
+    { data: changeRequests },
+  ] = await Promise.all([
     getPublicProjectActivities(token),
     getPublicProjectTasks(token),
     getPublicProjectDocuments(token),
@@ -56,6 +66,16 @@ export default async function PublicProjectPage({ params }: Props) {
       .select('*')
       .eq('project_id', project.id)
       .order('order_index', { ascending: true }),
+    supabase
+      .from('project_scope_versions')
+      .select('id,version_number,title,summary,scope_body,created_at')
+      .eq('project_id', project.id)
+      .order('version_number', { ascending: false }),
+    supabase
+      .from('change_requests')
+      .select('id,title,impact_summary,status,requested_deadline,created_at')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false }),
   ])
 
   const pendingClientTasks = tasksRes.data.filter(
@@ -64,6 +84,8 @@ export default async function PublicProjectPage({ params }: Props) {
   const pendingApprovals = approvalsRes.data.filter((approval) => approval.status === 'pending').length
   const documentsCount = documentsRes.data.length
   const phaseCount = phases?.length ?? 0
+  const scopeVersionCount = scopeVersions?.length ?? 0
+  const changeRequestCount = changeRequests?.length ?? 0
   const activitiesCount = activitiesRes.data.length
   const clientName = project.clients ? (project.clients as { name: string }).name : 'Projeto em acompanhamento'
   const daysLeft = project.target_end_date
@@ -182,7 +204,7 @@ export default async function PublicProjectPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
               <div className="rounded-[24px] border border-amber-200/60 bg-amber-50/70 px-4 py-3">
                 <div className="flex items-center gap-1.5 text-amber-600">
                   <CheckSquare className="h-3.5 w-3.5" />
@@ -214,6 +236,22 @@ export default async function PublicProjectPage({ params }: Props) {
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{documentsCount}</p>
                 <p className="text-xs text-slate-500">Disponiveis</p>
+              </div>
+              <div className="rounded-[24px] border border-emerald-200/70 bg-emerald-50/80 px-4 py-3">
+                <div className="flex items-center gap-1.5 text-emerald-600">
+                  <FileText className="h-3.5 w-3.5" />
+                  <p className="text-xs font-medium uppercase tracking-[0.14em]">Versoes</p>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{scopeVersionCount}</p>
+                <p className="text-xs text-slate-500">Escopo publicado</p>
+              </div>
+              <div className="rounded-[24px] border border-rose-200/70 bg-rose-50/80 px-4 py-3">
+                <div className="flex items-center gap-1.5 text-rose-600">
+                  <History className="h-3.5 w-3.5" />
+                  <p className="text-xs font-medium uppercase tracking-[0.14em]">Mudancas</p>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{changeRequestCount}</p>
+                <p className="text-xs text-slate-500">Solicitacoes</p>
               </div>
             </div>
           </div>
@@ -301,6 +339,16 @@ export default async function PublicProjectPage({ params }: Props) {
               <History className="h-4 w-4" />
               Atividade
             </TabsTrigger>
+
+            <TabsTrigger value="scope" className={tabTriggerClassName}>
+              <FileText className="h-4 w-4" />
+              Escopo
+              {changeRequestCount > 0 && (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 ring-1 ring-rose-500/10">
+                  {changeRequestCount}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="pt-4">
@@ -355,6 +403,13 @@ export default async function PublicProjectPage({ params }: Props) {
                 <ActivityTimeline activities={activitiesRes.data} />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="scope" className="pt-4">
+            <PublicScopePanel
+              scopeVersions={scopeVersions ?? []}
+              changeRequests={changeRequests ?? []}
+            />
           </TabsContent>
         </Tabs>
 

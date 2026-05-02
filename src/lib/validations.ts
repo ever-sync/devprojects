@@ -47,6 +47,8 @@ export const taskSchema = z.object({
   mentioned_user_ids: z.array(z.string().uuid()).optional(),
   image_path: z.string().max(500).optional().nullable(),
   task_category: z.enum(['saas', 'automation', 'other']).optional(),
+  recurring_pattern: z.enum(['daily', 'weekly', 'biweekly', 'monthly']).optional().nullable(),
+  recurring_interval_days: z.number().int().min(1).optional().nullable(),
 })
 
 export const phaseSchema = z.object({

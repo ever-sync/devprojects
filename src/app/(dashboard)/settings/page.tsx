@@ -5,7 +5,7 @@ import { RoleBadge } from '@/components/shared/RoleBadge'
 import { ProfileForm } from '@/components/settings/ProfileForm'
 import { NotificationForm } from '@/components/settings/NotificationForm'
 import { getClientNotificationSettings } from '@/actions/profile'
-import { Layout, ChevronRight, CreditCard, Webhook, GitBranch, ClipboardList, ShieldCheck } from 'lucide-react'
+import { Layout, ChevronRight, CreditCard, Webhook, GitBranch, ClipboardList, ShieldCheck, MessageSquare } from 'lucide-react'
 import type { Profile, UserRole, NotificationSettings } from '@/types'
 
 export default async function SettingsPage() {
@@ -107,6 +107,36 @@ export default async function SettingsPage() {
                   <div>
                     <p className="text-sm font-medium">Webhooks e n8n</p>
                     <p className="text-xs text-muted-foreground">Automacoes outbound por workspace</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a
+                href="/settings/slack"
+                className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Slack</p>
+                    <p className="text-xs text-muted-foreground">Notificacoes em canal com OAuth</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a
+                href="/settings/discord"
+                className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Discord</p>
+                    <p className="text-xs text-muted-foreground">Notificacoes por webhook</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />

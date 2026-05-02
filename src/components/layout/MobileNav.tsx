@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileBadge,
   ListChecks,
+  Sun,
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Meu Dia', href: '/my-day', icon: Sun },
   { label: 'Analytics', href: '/analytics', icon: BarChart3, adminOnly: true },
   { label: 'Propostas', href: '/proposals', icon: FileBadge },
   { label: 'Projetos', href: '/projects', icon: FolderKanban },

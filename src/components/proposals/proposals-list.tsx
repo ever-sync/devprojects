@@ -243,6 +243,9 @@ interface Template {
   id: string;
   name: string;
   description: string;
+  titleTemplate?: string;
+  descriptionTemplate?: string;
+  variables?: Array<{ key: string; label: string; placeholder?: string }>;
   defaultPhases: Array<{ title: string; duration_days: number; estimated_hours: number }>;
   defaultResources: Array<{ role_name: string; resource_type: string; allocated_hours: number }>;
 }
@@ -260,6 +263,7 @@ function CreateProposalForm({
   const [useTemplate, setUseTemplate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -282,14 +286,26 @@ function CreateProposalForm({
   useEffect(() => {
     if (selectedTemplate && templates.length > 0) {
       const template = templates.find((t) => t.id === selectedTemplate);
-      if (template && !formData.title) {
-        setFormData((prev) => ({
-          ...prev,
-          description: template.description,
-        }));
+      if (template) {
+        if (!formData.title) {
+          setFormData((prev) => ({
+            ...prev,
+            description: template.description,
+          }));
+        }
+        const initialVariables = (template.variables ?? []).reduce<Record<string, string>>((acc, variable) => {
+          acc[variable.key] = templateVariables[variable.key] ?? '';
+          return acc;
+        }, {});
+        setTemplateVariables(initialVariables);
       }
     }
   }, [selectedTemplate, templates]);
+
+  function applyVariables(templateValue: string | undefined, values: Record<string, string>) {
+    if (!templateValue) return '';
+    return templateValue.replace(/\{\{(\w+)\}\}/g, (_, key: string) => values[key]?.trim() || `{{${key}}}`);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -302,17 +318,26 @@ function CreateProposalForm({
             templateId: template.id,
             defaultPhases: template.defaultPhases,
             defaultResources: template.defaultResources,
+            variables: templateVariables,
           }
         : undefined;
 
+      const finalTitle = useTemplate && template
+        ? applyVariables(template.titleTemplate || formData.title, templateVariables)
+        : formData.title;
+      const finalDescription = useTemplate && template
+        ? applyVariables(template.descriptionTemplate || formData.description, templateVariables)
+        : formData.description;
+
       const result = await createProposal({
-        title: formData.title,
-        description: formData.description || undefined,
+        title: finalTitle,
+        description: finalDescription || undefined,
         clientId: formData.clientId || undefined,
         totalValue: formData.totalValue ? parseFloat(formData.totalValue) : undefined,
         currency: formData.currency,
         validUntil: formData.validUntil || undefined,
         templateData,
+        customFields: useTemplate ? { templateVariables } : undefined,
       });
 
       if (result.success) {
@@ -367,6 +392,39 @@ function CreateProposalForm({
                 {templates.find((t) => t.id === selectedTemplate)?.description}
               </p>
             )}
+          </div>
+        )}
+
+        {useTemplate && selectedTemplate && (
+          <div className="grid gap-3 rounded-lg border border-border p-3">
+            <p className="text-xs font-semibold text-muted-foreground">Variaveis do Template</p>
+            {(templates.find((t) => t.id === selectedTemplate)?.variables ?? []).map((variable) => (
+              <div key={variable.key} className="grid gap-1">
+                <Label htmlFor={`var-${variable.key}`}>{variable.label}</Label>
+                <Input
+                  id={`var-${variable.key}`}
+                  value={templateVariables[variable.key] ?? ''}
+                  onChange={(e) => setTemplateVariables((prev) => ({ ...prev, [variable.key]: e.target.value }))}
+                  placeholder={variable.placeholder}
+                />
+              </div>
+            ))}
+            <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+              <p>
+                <strong>Preview título:</strong>{' '}
+                {applyVariables(
+                  templates.find((t) => t.id === selectedTemplate)?.titleTemplate || formData.title,
+                  templateVariables,
+                )}
+              </p>
+              <p>
+                <strong>Preview descrição:</strong>{' '}
+                {applyVariables(
+                  templates.find((t) => t.id === selectedTemplate)?.descriptionTemplate || formData.description,
+                  templateVariables,
+                )}
+              </p>
+            </div>
           </div>
         )}
 

@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileBadge,
   ListChecks,
+  Sun,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,11 @@ const mainNavItems: NavItem[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: <LayoutDashboard className="w-4 h-4 shrink-0" />,
+  },
+  {
+    label: 'Meu Dia',
+    href: '/my-day',
+    icon: <Sun className="w-4 h-4 shrink-0" />,
   },
   {
     label: 'Analytics',

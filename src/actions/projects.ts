@@ -40,6 +40,17 @@ export async function createProject(data: ProjectInput & { templateId?: string }
 
   // Create phases from template if provided
   if (data.templateId) {
+    const { data: template } = await supabase
+      .from('phase_templates')
+      .select('id, project_type')
+      .eq('id', data.templateId)
+      .maybeSingle()
+
+    if (!template) return { error: 'Template de fases não encontrado' }
+    if (template.project_type && template.project_type !== parsed.data.type) {
+      return { error: 'Template incompatível com o tipo do projeto selecionado' }
+    }
+
     const { data: templateItems } = await supabase
       .from('phase_template_items')
       .select('name, order_index')

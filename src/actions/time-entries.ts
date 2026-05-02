@@ -97,3 +97,122 @@ export async function approveTimeEntry(projectId: string, timeEntryId: string) {
   revalidatePath(`/projects/${projectId}/hours`)
   return { success: true }
 }
+
+function calculateHoursFromInterval(startedAt: string, endedAt: string) {
+  const started = new Date(startedAt).getTime()
+  const ended = new Date(endedAt).getTime()
+  if (!Number.isFinite(started) || !Number.isFinite(ended) || ended <= started) {
+    return 0.01
+  }
+  const rawHours = (ended - started) / (1000 * 60 * 60)
+  return Math.max(0.01, Number(rawHours.toFixed(2)))
+}
+
+export async function getActiveTaskTimer(projectId: string) {
+  const { supabase, user } = await requireUser()
+  if (!user) return { error: 'Nao autenticado', timer: null }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select('id, project_id, task_id, started_at, is_running')
+    .eq('project_id', projectId)
+    .eq('user_id', user.id)
+    .eq('is_running', true)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) return { error: error.message, timer: null }
+  return { error: null, timer: data }
+}
+
+export async function startTaskTimer(projectId: string, taskId: string, notes?: string) {
+  const { supabase, user } = await requireUser()
+  if (!user) return { error: 'Nao autenticado' }
+
+  const { data: activeTimer } = await supabase
+    .from('time_entries')
+    .select('id, task_id')
+    .eq('project_id', projectId)
+    .eq('user_id', user.id)
+    .eq('is_running', true)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (activeTimer) {
+    if (activeTimer.task_id === taskId) {
+      return { success: true, alreadyRunning: true, timerId: activeTimer.id }
+    }
+    return { error: 'Voce ja possui um timer ativo em outra tarefa. Pare o timer atual para iniciar um novo.' }
+  }
+
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('time_entries')
+    .insert({
+      project_id: projectId,
+      task_id: taskId,
+      user_id: user.id,
+      entry_date: now.slice(0, 10),
+      started_at: now,
+      is_running: true,
+      hours: null,
+      notes: notes ?? null,
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/projects/${projectId}/hours`)
+  revalidatePath(`/projects/${projectId}/tasks`)
+  return { success: true, timerId: data.id }
+}
+
+export async function stopTaskTimer(projectId: string, taskId?: string) {
+  const { supabase, user } = await requireUser()
+  if (!user) return { error: 'Nao autenticado' }
+
+  let query = supabase
+    .from('time_entries')
+    .select('id, task_id, started_at')
+    .eq('project_id', projectId)
+    .eq('user_id', user.id)
+    .eq('is_running', true)
+    .order('started_at', { ascending: false })
+    .limit(1)
+
+  if (taskId) {
+    query = query.eq('task_id', taskId)
+  }
+
+  const { data: running, error: runningError } = await query.maybeSingle()
+  if (runningError) return { error: runningError.message }
+  if (!running) return { error: 'Nenhum timer ativo encontrado para esta tarefa.' }
+  if (!running.started_at) return { error: 'Timer ativo sem started_at. Verifique os dados.' }
+
+  const endedAt = new Date().toISOString()
+  const hours = calculateHoursFromInterval(running.started_at, endedAt)
+
+  const { error } = await supabase
+    .from('time_entries')
+    .update({
+      ended_at: endedAt,
+      is_running: false,
+      hours,
+      updated_at: endedAt,
+    })
+    .eq('id', running.id)
+
+  if (error) return { error: error.message }
+
+  if (running.task_id) {
+    await recalculateTaskHours(supabase, running.task_id)
+  }
+
+  revalidatePath(`/projects/${projectId}/hours`)
+  revalidatePath(`/projects/${projectId}/tasks`)
+  revalidatePath(`/projects/${projectId}/productivity`)
+  return { success: true, hours, timeEntryId: running.id }
+}

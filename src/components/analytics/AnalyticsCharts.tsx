@@ -3,6 +3,8 @@
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,6 +25,15 @@ interface AnalyticsChartsProps {
     minorRisk: number
     majorRisk: number
   }
+  burndown: Array<{
+    date: string
+    remainingHours: number
+    idealRemainingHours: number
+  }>
+  velocity: Array<{
+    weekStart: string
+    completedHours: number
+  }>
 }
 
 const PIE_COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#14B8A6', '#FB7185']
@@ -57,6 +68,8 @@ export function AnalyticsCharts({
   projectsByType,
   healthDistribution,
   forecastDistribution,
+  burndown,
+  velocity,
 }: AnalyticsChartsProps) {
   const statusData = Object.entries(statusCounts).map(([status, count]) => ({
     name: STATUS_MAP[status] || status,
@@ -79,6 +92,16 @@ export function AnalyticsCharts({
     { name: 'Risco leve', count: forecastDistribution.minorRisk, fill: '#F59E0B' },
     { name: 'Risco alto', count: forecastDistribution.majorRisk, fill: '#EF4444' },
   ]
+
+  const burndownData = burndown.map((point) => ({
+    ...point,
+    label: point.date.slice(5),
+  }))
+
+  const velocityData = velocity.map((point) => ({
+    ...point,
+    label: point.weekStart.slice(5),
+  }))
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -219,6 +242,57 @@ export function AnalyticsCharts({
                     <Cell key={entry.name} fill={entry.fill} />
                   ))}
                 </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card border-border shadow-none">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Burndown (horas restantes)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[280px] w-full rounded-xl bg-white">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={burndownData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
+                <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: '#E2E8F0',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Line type="monotone" dataKey="remainingHours" stroke="#0EA5E9" strokeWidth={2} dot={false} name="Real" />
+                <Line type="monotone" dataKey="idealRemainingHours" stroke="#94A3B8" strokeWidth={2} dot={false} strokeDasharray="4 4" name="Ideal" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card border-border shadow-none">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Velocity semanal (horas concluídas)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[280px] w-full rounded-xl bg-white">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={velocityData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
+                <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    borderColor: '#E2E8F0',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Bar dataKey="completedHours" fill="#14B8A6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

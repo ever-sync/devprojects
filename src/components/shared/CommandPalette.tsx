@@ -11,12 +11,12 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { createClient } from '@/lib/supabase/client'
-import { FolderKanban, CheckSquare } from 'lucide-react'
+import { FolderKanban, CheckSquare, Sun, LayoutDashboard } from 'lucide-react'
 import { PROJECT_TYPE_LABELS } from '@/lib/constants'
 
 interface SearchResult {
   id: string
-  type: 'project' | 'task'
+  type: 'project' | 'task' | 'quick'
   label: string
   sub?: string
   href: string
@@ -47,6 +47,20 @@ export function CommandPalette() {
     ])
 
     const items: SearchResult[] = [
+      {
+        id: 'quick-dashboard',
+        type: 'quick',
+        label: 'Dashboard',
+        sub: 'Atalho rapido',
+        href: '/dashboard',
+      },
+      {
+        id: 'quick-my-day',
+        type: 'quick',
+        label: 'Meu Dia',
+        sub: 'Foco diario',
+        href: '/my-day',
+      },
       ...(projectsRes.data ?? []).map((p) => ({
         id: p.id,
         type: 'project' as const,
@@ -68,24 +82,40 @@ export function CommandPalette() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      const target = e.target as HTMLElement | null
+      const isEditable =
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setOpen((v) => {
           const next = !v
           if (next) void loadResults()
           return next
         })
+        return
+      }
+
+      if (!open && isEditable) {
+        return
+      }
+
+      if (e.key === 'Escape' && open) {
+        setOpen(false)
       }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [loadResults])
+  }, [loadResults, open])
 
   function handleSelect(href: string) {
     setOpen(false)
     router.push(href)
   }
 
+  const quickResults = results.filter((r) => r.type === 'quick')
   const projectResults = results.filter((r) => r.type === 'project')
   const taskResults = results.filter((r) => r.type === 'task')
 
@@ -107,12 +137,34 @@ export function CommandPalette() {
           <>
             <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
+            {quickResults.length > 0 && (
+              <CommandGroup heading="Atalhos">
+                {quickResults.map((r) => (
+                  <CommandItem
+                    key={r.id}
+                    value={`${r.label} ${r.sub ?? ''}`}
+                    onSelect={() => handleSelect(r.href)}
+                  >
+                    {r.href === '/my-day' ? (
+                      <Sun className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+                    ) : (
+                      <LayoutDashboard className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="flex-1">{r.label}</span>
+                    {r.sub && (
+                      <span className="ml-2 text-xs text-muted-foreground">{r.sub}</span>
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
             {projectResults.length > 0 && (
               <CommandGroup heading="Projetos">
                 {projectResults.map((r) => (
                   <CommandItem
                     key={r.id}
-                    value={r.label}
+                    value={`${r.label} ${r.sub ?? ''}`}
                     onSelect={() => handleSelect(r.href)}
                   >
                     <FolderKanban className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
@@ -130,7 +182,7 @@ export function CommandPalette() {
                 {taskResults.map((r) => (
                   <CommandItem
                     key={r.id}
-                    value={r.label}
+                    value={`${r.label} ${r.sub ?? ''}`}
                     onSelect={() => handleSelect(r.href)}
                   >
                     <CheckSquare className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />

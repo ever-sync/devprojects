@@ -18,6 +18,7 @@ interface Template {
   id: string
   name: string
   description: string | null
+  project_type: 'saas' | 'automation' | 'ai_agent' | null
   phase_template_items: TemplateItem[]
 }
 
@@ -35,11 +36,13 @@ export function TemplateManagement({ initialTemplates }: TemplateManagementProps
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [items, setItems] = useState<string[]>([])
+  const [projectType, setProjectType] = useState<'saas' | 'automation' | 'ai_agent'>('saas')
 
   function resetForm() {
     setName('')
     setDescription('')
     setItems([''])
+    setProjectType('saas')
     setEditingId(null)
     setIsCreating(false)
   }
@@ -48,6 +51,7 @@ export function TemplateManagement({ initialTemplates }: TemplateManagementProps
     setName(template.name)
     setDescription(template.description ?? '')
     setItems(template.phase_template_items.map(i => i.name))
+    setProjectType(template.project_type ?? 'saas')
     setEditingId(template.id)
     setIsCreating(false)
   }
@@ -62,8 +66,8 @@ export function TemplateManagement({ initialTemplates }: TemplateManagementProps
     const filteredItems = items.filter(i => i.trim())
     
     const res = editingId 
-      ? await updateTemplate(editingId, { name, description, items: filteredItems })
-      : await createTemplate({ name, description, items: filteredItems })
+      ? await updateTemplate(editingId, { name, description, project_type: projectType, items: filteredItems })
+      : await createTemplate({ name, description, project_type: projectType, items: filteredItems })
 
     if (res.error) {
       toast.error(res.error)
@@ -165,6 +169,18 @@ export function TemplateManagement({ initialTemplates }: TemplateManagementProps
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Breve explicação do uso deste template..." rows={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de Projeto</Label>
+                <select
+                  value={projectType}
+                  onChange={(e) => setProjectType(e.target.value as 'saas' | 'automation' | 'ai_agent')}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="saas">SaaS</option>
+                  <option value="automation">Automacao</option>
+                  <option value="ai_agent">IA Atendimento</option>
+                </select>
               </div>
             </div>
 

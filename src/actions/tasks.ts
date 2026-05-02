@@ -7,6 +7,21 @@ import { triggerN8nEvent } from '@/lib/n8n'
 import { getProfilesByIds, notifyClientPendingTask, notifyTaskStakeholders } from '@/lib/notification-events'
 import type { TaskStatus } from '@/types'
 
+function addDaysIso(baseDate: string, days: number) {
+  const anchor = baseDate ? new Date(`${baseDate}T12:00:00`) : new Date()
+  anchor.setDate(anchor.getDate() + days)
+  return anchor.toISOString().slice(0, 10)
+}
+
+function recurringPatternToDays(pattern: string | null | undefined, fallback?: number | null) {
+  if (typeof fallback === 'number' && fallback >= 1) return fallback
+  if (pattern === 'daily') return 1
+  if (pattern === 'weekly') return 7
+  if (pattern === 'biweekly') return 14
+  if (pattern === 'monthly') return 30
+  return null
+}
+
 function buildTaskPatch(data: Partial<TaskInput>) {
   const shouldClearBlock = data.status === 'done' || data.status === 'review'
   const hasBlockedReason = typeof data.blocked_reason === 'string' && data.blocked_reason.trim().length > 0
@@ -94,9 +109,10 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus, proje
 
   if (error) return { error: error.message }
 
-  const { data: task } = await createAdminClient()
+  const adminClient = createAdminClient()
+  const { data: task } = await adminClient
     .from('tasks')
-    .select('id, title, owner_type, status')
+    .select('id, project_id, phase_id, title, description, status, owner_type, priority, assignee_id, due_date, estimated_hours, remaining_hours, detail_notes, checklist, mentioned_user_ids, task_category, recurring_pattern, recurring_interval_days, recurring_parent_task_id')
     .eq('id', taskId)
     .single()
 
@@ -106,7 +122,39 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus, proje
       taskId: task.id,
       taskTitle: task.title,
       status,
-    })
+      })
+  }
+
+  if (task && status === 'done') {
+    const intervalDays = recurringPatternToDays(task.recurring_pattern, task.recurring_interval_days)
+    if (intervalDays) {
+      const nextDueDate = task.due_date ? addDaysIso(task.due_date, intervalDays) : null
+      const recurringRootId = task.recurring_parent_task_id ?? task.id
+
+      await adminClient.from('tasks').insert({
+        project_id: task.project_id,
+        phase_id: task.phase_id,
+        title: task.title,
+        description: task.description,
+        status: 'todo',
+        owner_type: task.owner_type,
+        priority: task.priority,
+        assignee_id: task.assignee_id,
+        due_date: nextDueDate,
+        created_by: user.id,
+        estimated_hours: task.estimated_hours,
+        actual_hours: null,
+        remaining_hours: task.remaining_hours,
+        detail_notes: task.detail_notes,
+        checklist: task.checklist,
+        mentioned_user_ids: task.mentioned_user_ids,
+        task_category: task.task_category,
+        recurring_pattern: task.recurring_pattern,
+        recurring_interval_days: intervalDays,
+        recurring_parent_task_id: recurringRootId,
+        updated_at: new Date().toISOString(),
+      })
+    }
   }
 
   revalidatePath(`/projects/${projectId}/tasks`)

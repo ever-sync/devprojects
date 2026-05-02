@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { triggerN8nEvent } from '@/lib/n8n'
+import { sendSlackNotification } from '@/lib/slack'
+import { sendDiscordNotification } from '@/lib/discord'
 
 type Recipient = {
   userId?: string | null
@@ -65,6 +67,18 @@ async function dispatchNotifications(input: DispatchInput) {
       })),
       ...(input.payload ?? {}),
     },
+  })
+
+  await sendSlackNotification({
+    projectId: input.projectId,
+    title: input.title,
+    body: input.body,
+  })
+
+  await sendDiscordNotification({
+    projectId: input.projectId,
+    title: input.title,
+    body: input.body,
   })
 }
 

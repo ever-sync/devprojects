@@ -23,7 +23,7 @@ export default async function NewProjectPage({ searchParams }: Props) {
 
   const [clientsRes, templatesRes] = await Promise.all([
     supabase.from('clients').select('id, name').order('name'),
-    supabase.from('phase_templates').select('id, name').order('name')
+    supabase.from('phase_templates').select('id, name, project_type').order('name')
   ])
 
   return (

@@ -23,6 +23,8 @@ type TaskRow = {
   assignee_id: string | null
   estimated_hours: number | null
   actual_hours: number | null
+  created_at: string
+  updated_at: string
 }
 
 type ApprovalRow = {
@@ -98,6 +100,20 @@ function clamp(value: number, min: number, max: number) {
 
 function toISODate(value: Date) {
   return value.toISOString().split('T')[0]
+}
+
+function startOfDay(value: Date) {
+  const date = new Date(value)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function startOfWeekISO(value: Date) {
+  const date = startOfDay(value)
+  const day = date.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  date.setDate(date.getDate() + diff)
+  return toISODate(date)
 }
 
 function differenceInDays(start: Date, end: Date) {
@@ -291,11 +307,12 @@ async function persistDailyPredictiveData(
   }
 }
 
-export async function getAdminAnalytics() {
+export async function getAdminAnalytics(periodDays = 7) {
   const supabase = await createClient()
   const today = new Date()
   const todayIso = toISODate(today)
-  const weekAgoIso = toISODate(new Date(today.getTime() - 7 * MS_PER_DAY))
+  const clampedPeriodDays = Math.max(1, Math.min(90, Math.floor(periodDays)))
+  const periodStartIso = toISODate(new Date(today.getTime() - clampedPeriodDays * MS_PER_DAY))
 
   const [
     { count: totalProjects },
@@ -328,13 +345,13 @@ export async function getAdminAnalytics() {
       .neq('status', 'cancelled'),
     supabase
       .from('tasks')
-      .select('project_id, status, due_date, blocked_reason, assignee_id, estimated_hours, actual_hours'),
+      .select('project_id, status, due_date, blocked_reason, assignee_id, estimated_hours, actual_hours, created_at, updated_at'),
     supabase.from('approvals').select('project_id, status'),
     supabase.from('project_risks').select('project_id, status'),
     supabase
       .from('time_entries')
       .select('project_id, user_id, hours, entry_date')
-      .gte('entry_date', weekAgoIso)
+      .gte('entry_date', periodStartIso)
       .lte('entry_date', todayIso),
     supabase
       .from('team_capacity')
@@ -489,6 +506,74 @@ export async function getAdminAnalytics() {
     majorRisk: projectHealthSummaries.filter((project) => project.projectedDelayDays > 7).length,
   }
 
+  const periodDaysCount = clampedPeriodDays + 1
+  const periodDates = Array.from({ length: periodDaysCount }, (_, index) => {
+    const d = new Date(today.getTime() - (clampedPeriodDays - index) * MS_PER_DAY)
+    return toISODate(d)
+  })
+
+  const hoursByTask = new Map<string, number>()
+  const doneDateByTask = new Map<string, string | null>()
+  const taskIdByIndex = new Map<number, string>()
+  const taskHoursByIndex = new Map<number, number>()
+
+  tasks.forEach((task, index) => {
+    const taskId = `${index}-${task.project_id ?? 'none'}`
+    taskIdByIndex.set(index, taskId)
+    const hours = Math.max(task.estimated_hours ?? task.actual_hours ?? 0, 0)
+    taskHoursByIndex.set(index, hours)
+    hoursByTask.set(taskId, hours)
+
+    if (task.status === 'done') {
+      doneDateByTask.set(taskId, toISODate(new Date(task.updated_at)))
+    } else {
+      doneDateByTask.set(taskId, null)
+    }
+  })
+
+  const totalScopeHours = Array.from(hoursByTask.values()).reduce((acc, value) => acc + value, 0)
+
+  const burndown = periodDates.map((date, index) => {
+    const remainingHours = tasks.reduce((acc, _task, taskIndex) => {
+      const taskId = taskIdByIndex.get(taskIndex)
+      if (!taskId) return acc
+      const doneDate = doneDateByTask.get(taskId)
+      const taskHours = taskHoursByIndex.get(taskIndex) ?? 0
+      if (!doneDate || doneDate > date) return acc + taskHours
+      return acc
+    }, 0)
+
+    const idealRemainingHours =
+      totalScopeHours > 0
+        ? Math.max(totalScopeHours * (1 - index / Math.max(periodDates.length - 1, 1)), 0)
+        : 0
+
+    return {
+      date,
+      remainingHours: Math.round(remainingHours * 10) / 10,
+      idealRemainingHours: Math.round(idealRemainingHours * 10) / 10,
+    }
+  })
+
+  const velocityByWeek = new Map<string, number>()
+  tasks.forEach((task, index) => {
+    if (task.status !== 'done') return
+    const taskId = taskIdByIndex.get(index)
+    if (!taskId) return
+    const doneDate = doneDateByTask.get(taskId)
+    if (!doneDate || doneDate < periodStartIso || doneDate > todayIso) return
+    const week = startOfWeekISO(new Date(doneDate))
+    const taskHours = taskHoursByIndex.get(index) ?? 0
+    velocityByWeek.set(week, (velocityByWeek.get(week) ?? 0) + taskHours)
+  })
+
+  const velocity = Array.from(velocityByWeek.entries())
+    .map(([weekStart, completedHours]) => ({
+      weekStart,
+      completedHours: Math.round(completedHours * 10) / 10,
+    }))
+    .sort((a, b) => (a.weekStart < b.weekStart ? -1 : 1))
+
   return {
     kpis: {
       totalProjects: totalProjects ?? 0,
@@ -511,6 +596,8 @@ export async function getAdminAnalytics() {
     }, {}),
     healthDistribution,
     forecastDistribution,
+    burndown,
+    velocity,
     projectHealthSummaries,
     recentActivities: recentActivities ?? [],
   }
