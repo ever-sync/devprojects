@@ -1,7 +1,6 @@
-// @ts-nocheck — Workflow tables not yet in database types
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +29,8 @@ interface Webhook {
   };
 }
 
+type ListWebhooksResult = Awaited<ReturnType<typeof listWebhooks>>
+
 export function WebhooksList({ workspaceId }: { workspaceId?: string }) {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,27 +42,32 @@ export function WebhooksList({ workspaceId }: { workspaceId?: string }) {
     workflow_id: ''
   });
 
-  useEffect(() => {
-    loadWebhooks();
-  }, [workspaceId]);
-
-  async function loadWebhooks() {
+  const loadWebhooks = useCallback(async () => {
     setLoading(true);
-    const result = await listWebhooks(workspaceId);
+    const result: ListWebhooksResult = await listWebhooks(workspaceId);
     if (result.success && result.data) {
       setWebhooks(result.data as Webhook[]);
+    } else {
+      setWebhooks([]);
     }
     setLoading(false);
-  }
+  }, [workspaceId]);
 
-  async function handleCreate(e: React.FormEvent) {
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadWebhooks();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadWebhooks]);
+
+  async function handleCreate(e: FormEvent) {
     e.preventDefault();
     
     const result = await createWebhookEndpoint(formData);
     if (result.success) {
       setFormData({ name: '', endpoint_url: '', workflow_id: '' });
       setShowCreateForm(false);
-      loadWebhooks();
+      await loadWebhooks();
     } else {
       alert(result.error);
     }

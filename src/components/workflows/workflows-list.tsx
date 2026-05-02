@@ -1,7 +1,6 @@
-// @ts-nocheck — Workflow tables not yet in database types
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,28 +25,35 @@ interface Workflow {
   updated_at: string;
 }
 
+type ListWorkflowsResult = Awaited<ReturnType<typeof listWorkflows>>
+
 export function WorkflowsList({ workspaceId }: { workspaceId?: string }) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [executingId, setExecutingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadWorkflows();
-  }, [workspaceId]);
-
-  async function loadWorkflows() {
+  const loadWorkflows = useCallback(async () => {
     setLoading(true);
-    const result = await listWorkflows(workspaceId);
+    const result: ListWorkflowsResult = await listWorkflows(workspaceId);
     if (result.success && result.data) {
       setWorkflows(result.data as Workflow[]);
+    } else {
+      setWorkflows([]);
     }
     setLoading(false);
-  }
+  }, [workspaceId]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadWorkflows();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadWorkflows]);
 
   async function handleToggleStatus(workflowId: string, currentStatus: boolean) {
     const result = await toggleWorkflowStatus(workflowId, !currentStatus);
     if (result.success) {
-      loadWorkflows();
+      await loadWorkflows();
     }
   }
 
@@ -55,7 +61,7 @@ export function WorkflowsList({ workspaceId }: { workspaceId?: string }) {
     setExecutingId(workflowId);
     const result = await executeWorkflow({ workflow_id: workflowId });
     if (result.success) {
-      loadWorkflows();
+      await loadWorkflows();
     }
     setExecutingId(null);
   }
@@ -65,7 +71,7 @@ export function WorkflowsList({ workspaceId }: { workspaceId?: string }) {
     
     const result = await deleteWorkflow(workflowId);
     if (result.success) {
-      loadWorkflows();
+      await loadWorkflows();
     }
   }
 

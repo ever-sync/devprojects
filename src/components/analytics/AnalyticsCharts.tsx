@@ -103,6 +103,21 @@ export function AnalyticsCharts({
     label: point.weekStart.slice(5),
   }))
 
+  const firstBurndown = burndownData[0]
+  const lastBurndown = burndownData[burndownData.length - 1]
+  const burndownGap =
+    lastBurndown && Number.isFinite(lastBurndown.idealRemainingHours)
+      ? Math.round((lastBurndown.remainingHours - lastBurndown.idealRemainingHours) * 10) / 10
+      : 0
+  const burnRate =
+    firstBurndown && lastBurndown
+      ? Math.round((firstBurndown.remainingHours - lastBurndown.remainingHours) * 10) / 10
+      : 0
+
+  const velocityLast = velocityData[velocityData.length - 1]?.completedHours ?? 0
+  const velocityPrev = velocityData[velocityData.length - 2]?.completedHours ?? 0
+  const velocityTrend = Math.round((velocityLast - velocityPrev) * 10) / 10
+
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <Card className="bg-card border-border shadow-none">
@@ -251,51 +266,93 @@ export function AnalyticsCharts({
       <Card className="bg-card border-border shadow-none">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Burndown (horas restantes)</CardTitle>
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border/60 bg-muted/20 px-2.5 py-1">
+              Burn no periodo: {burnRate.toFixed(1)}h
+            </span>
+            <span
+              className={`rounded-full border px-2.5 py-1 ${
+                burndownGap > 0
+                  ? 'border-red-500/30 bg-red-500/10 text-red-700'
+                  : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+              }`}
+            >
+              Desvio atual: {burndownGap > 0 ? '+' : ''}
+              {burndownGap.toFixed(1)}h
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[280px] w-full rounded-xl bg-white">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={burndownData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
-                <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    borderColor: '#E2E8F0',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Line type="monotone" dataKey="remainingHours" stroke="#0EA5E9" strokeWidth={2} dot={false} name="Real" />
-                <Line type="monotone" dataKey="idealRemainingHours" stroke="#94A3B8" strokeWidth={2} dot={false} strokeDasharray="4 4" name="Ideal" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {burndownData.length === 0 ? (
+            <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/10 text-sm text-muted-foreground">
+              Sem dados de burndown no periodo selecionado.
+            </div>
+          ) : (
+            <div className="h-[280px] w-full rounded-xl bg-white">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={burndownData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
+                  <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E2E8F0',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Line type="monotone" dataKey="remainingHours" stroke="#0EA5E9" strokeWidth={2} dot={false} name="Real" />
+                  <Line type="monotone" dataKey="idealRemainingHours" stroke="#94A3B8" strokeWidth={2} dot={false} strokeDasharray="4 4" name="Ideal" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card className="bg-card border-border shadow-none">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Velocity semanal (horas concluídas)</CardTitle>
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border/60 bg-muted/20 px-2.5 py-1">
+              Semana atual: {velocityLast.toFixed(1)}h
+            </span>
+            <span
+              className={`rounded-full border px-2.5 py-1 ${
+                velocityTrend >= 0
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+                  : 'border-amber-500/30 bg-amber-500/10 text-amber-700'
+              }`}
+            >
+              Tendencia: {velocityTrend >= 0 ? '+' : ''}
+              {velocityTrend.toFixed(1)}h
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[280px] w-full rounded-xl bg-white">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={velocityData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
-                <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    borderColor: '#E2E8F0',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="completedHours" fill="#14B8A6" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {velocityData.length === 0 ? (
+            <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/10 text-sm text-muted-foreground">
+              Sem dados de velocity no periodo selecionado.
+            </div>
+          ) : (
+            <div className="h-[280px] w-full rounded-xl bg-white">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={velocityData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(15, 23, 42, 0.12)" />
+                  <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E2E8F0',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="completedHours" fill="#14B8A6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

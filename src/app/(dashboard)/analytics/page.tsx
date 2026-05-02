@@ -75,7 +75,10 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     )
   }
 
-  const stats = await getAdminAnalytics(selectedPeriod)
+  const stats = await getAdminAnalytics(selectedPeriod, {
+    clientName: selectedClient || null,
+    projectType: selectedType || null,
+  })
   const profitability = await getPortfolioProfitabilityDataFiltered(selectedPeriod, {
     client: selectedClient || null,
     projectType: selectedType || null,

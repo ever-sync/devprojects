@@ -92,6 +92,11 @@ type ProjectHealthSummary = {
   rationale: string
 }
 
+type AnalyticsFilters = {
+  clientName?: string | null
+  projectType?: string | null
+}
+
 const MS_PER_DAY = 86_400_000
 
 function clamp(value: number, min: number, max: number) {
@@ -307,7 +312,7 @@ async function persistDailyPredictiveData(
   }
 }
 
-export async function getAdminAnalytics(periodDays = 7) {
+export async function getAdminAnalytics(periodDays = 7, filters: AnalyticsFilters = {}) {
   const supabase = await createClient()
   const today = new Date()
   const todayIso = toISODate(today)
@@ -315,10 +320,6 @@ export async function getAdminAnalytics(periodDays = 7) {
   const periodStartIso = toISODate(new Date(today.getTime() - clampedPeriodDays * MS_PER_DAY))
 
   const [
-    { count: totalProjects },
-    { count: totalClients },
-    { count: totalTasks },
-    { data: projectsByType },
     { data: recentActivities },
     { data: projectsData },
     { data: tasksData },
@@ -328,10 +329,6 @@ export async function getAdminAnalytics(periodDays = 7) {
     { data: capacityData },
     { data: costSnapshotsData },
   ] = await Promise.all([
-    supabase.from('projects').select('*', { count: 'exact', head: true }),
-    supabase.from('clients').select('*', { count: 'exact', head: true }),
-    supabase.from('tasks').select('*', { count: 'exact', head: true }),
-    supabase.from('projects').select('type'),
     supabase
       .from('project_activities')
       .select('*, user:profiles(full_name, avatar_url, role), project:projects(name)')
@@ -364,12 +361,29 @@ export async function getAdminAnalytics(periodDays = 7) {
   ])
 
   const projects = (projectsData ?? []) as ProjectRow[]
-  const tasks = (tasksData ?? []) as TaskRow[]
-  const approvals = (approvalsData ?? []) as ApprovalRow[]
-  const risks = (risksData ?? []) as RiskRow[]
+  const normalizedClientFilter = filters.clientName?.trim().toLowerCase() ?? ''
+  const normalizedTypeFilter = filters.projectType?.trim().toLowerCase() ?? ''
+  const filteredProjects = projects.filter((project) => {
+    const matchesClient =
+      !normalizedClientFilter ||
+      (project.clients?.name ?? '').toLowerCase() === normalizedClientFilter
+    const matchesType = !normalizedTypeFilter || (project.type ?? '').toLowerCase() === normalizedTypeFilter
+    return matchesClient && matchesType
+  })
+  const filteredProjectIds = new Set(filteredProjects.map((project) => project.id))
+
+  const tasks = ((tasksData ?? []) as TaskRow[]).filter(
+    (task) => task.project_id && filteredProjectIds.has(task.project_id),
+  )
+  const approvals = ((approvalsData ?? []) as ApprovalRow[]).filter((approval) =>
+    filteredProjectIds.has(approval.project_id),
+  )
+  const risks = ((risksData ?? []) as RiskRow[]).filter((risk) => filteredProjectIds.has(risk.project_id))
   const timeEntries = (timeEntriesData ?? []) as TimeEntryRow[]
   const capacities = (capacityData ?? []) as CapacityRow[]
-  const costSnapshots = (costSnapshotsData ?? []) as CostSnapshotRow[]
+  const costSnapshots = ((costSnapshotsData ?? []) as CostSnapshotRow[]).filter((snapshot) =>
+    filteredProjectIds.has(snapshot.project_id),
+  )
 
   const tasksByProject = new Map<string, TaskRow[]>()
   const approvalsByProject = new Map<string, ApprovalRow[]>()
@@ -410,7 +424,7 @@ export async function getAdminAnalytics(periodDays = 7) {
   const metricsMap = new Map<string, ProjectMetricsInsert>()
   const forecastMap = new Map<string, DeliveryForecastInsert>()
 
-  const projectHealthSummaries: ProjectHealthSummary[] = projects
+  const projectHealthSummaries: ProjectHealthSummary[] = filteredProjects
     .filter((project) => project.status === 'active')
     .map((project) => {
       const taskItems = tasksByProject.get(project.id) ?? []
@@ -455,14 +469,13 @@ export async function getAdminAnalytics(periodDays = 7) {
 
   await persistDailyPredictiveData(projectHealthSummaries, metricsMap, forecastMap)
 
-  const allTasks = tasks
-  const statusCounts = allTasks.reduce<Record<string, number>>((acc, task) => {
+  const statusCounts = tasks.reduce<Record<string, number>>((acc, task) => {
     acc[task.status] = (acc[task.status] || 0) + 1
     return acc
   }, {})
 
-  const totalEstimated = allTasks.reduce((acc, task) => acc + (task.estimated_hours ?? 0), 0)
-  const totalActual = allTasks.reduce((acc, task) => acc + (task.actual_hours ?? 0), 0)
+  const totalEstimated = tasks.reduce((acc, task) => acc + (task.estimated_hours ?? 0), 0)
+  const totalActual = tasks.reduce((acc, task) => acc + (task.actual_hours ?? 0), 0)
   const globalEfficiency =
     totalEstimated > 0 && totalActual > 0 ? Math.round((totalEstimated / totalActual) * 100) : 0
 
@@ -576,9 +589,9 @@ export async function getAdminAnalytics(periodDays = 7) {
 
   return {
     kpis: {
-      totalProjects: totalProjects ?? 0,
-      totalClients: totalClients ?? 0,
-      totalTasks: totalTasks ?? 0,
+      totalProjects: filteredProjects.length,
+      totalClients: new Set(filteredProjects.map((project) => project.clients?.name).filter(Boolean)).size,
+      totalTasks: tasks.length,
       globalEfficiency,
       avgHealthScore,
       atRiskProjects: atRiskProjects.length,
@@ -590,8 +603,9 @@ export async function getAdminAnalytics(periodDays = 7) {
       avgProjectedDelay,
     },
     statusCounts,
-    projectsByType: (projectsByType ?? []).reduce<Record<string, number>>((acc, project) => {
-      acc[project.type] = (acc[project.type] || 0) + 1
+    projectsByType: filteredProjects.reduce<Record<string, number>>((acc, project) => {
+      const key = project.type || 'Sem tipo'
+      acc[key] = (acc[key] || 0) + 1
       return acc
     }, {}),
     healthDistribution,
@@ -599,6 +613,8 @@ export async function getAdminAnalytics(periodDays = 7) {
     burndown,
     velocity,
     projectHealthSummaries,
-    recentActivities: recentActivities ?? [],
+    recentActivities: (recentActivities ?? []).filter((activity) =>
+      filteredProjectIds.has((activity as { project_id?: string }).project_id ?? ''),
+    ),
   }
 }

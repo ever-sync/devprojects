@@ -28,6 +28,7 @@ const ragQuerySchema = z.object({
 export async function searchRelevantDocuments(query: string, projectId: string, topK: number = 5) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
     const embeddingResponse = await openai.embeddings.create({
       model: 'text-embedding-3-small',
@@ -35,7 +36,7 @@ export async function searchRelevantDocuments(query: string, projectId: string, 
     });
     const mockEmbedding = embeddingResponse.data[0].embedding;
     
-    const { data, error } = await supabase.rpc('match_documents', {
+    const { data, error } = await db.rpc('match_documents', {
       query_embedding: mockEmbedding,
       match_count: topK,
       filter: { project_id: projectId },
@@ -114,7 +115,9 @@ Instruções:
     const answer = completion.choices[0]?.message?.content || 'Não foi possível gerar uma resposta.';
 
     // 5. Salvar no histórico de conversação
-    const { data: conversation, error: convError } = await supabase
+    const db = supabase as any;
+
+    const { data: conversation, error: convError } = await db
       .from('ai_chat_conversations')
       .insert({
         project_id: validated.projectId,
@@ -130,13 +133,13 @@ Instruções:
 
     // 6. Salvar mensagem
     if (conversation) {
-      await supabase.from('ai_chat_messages').insert({
+      await db.from('ai_chat_messages').insert({
         conversation_id: conversation.id,
         role: 'user',
         content: validated.query,
       });
 
-      await supabase.from('ai_chat_messages').insert({
+      await db.from('ai_chat_messages').insert({
         conversation_id: conversation.id,
         role: 'assistant',
         content: answer,
@@ -153,7 +156,7 @@ Instruções:
   } catch (error) {
     logError('Erro ao processar pergunta', error);
     if (error instanceof z.ZodError) {
-      return { error: 'Dados inválidos', details: error.errors };
+      return { error: 'Dados inválidos', details: error.issues };
     }
     return { error: 'Falha ao processar pergunta. Tente novamente.' };
   }
@@ -165,8 +168,9 @@ Instruções:
 export async function loadConversation(conversationId: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('ai_chat_messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -189,8 +193,9 @@ export async function loadConversation(conversationId: string) {
 export async function listProjectConversations(projectId: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('ai_chat_conversations')
       .select('*')
       .eq('project_id', projectId)
@@ -220,6 +225,7 @@ export async function indexDocumentForSearch(documentData: {
 }) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
     const embeddingResponse = await openai.embeddings.create({
       model: 'text-embedding-3-small',
@@ -227,7 +233,7 @@ export async function indexDocumentForSearch(documentData: {
     });
     const mockEmbedding = embeddingResponse.data[0].embedding;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('vector_documents')
       .insert({
         project_id: documentData.projectId,

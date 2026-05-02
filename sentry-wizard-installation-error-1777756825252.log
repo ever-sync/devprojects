@@ -1,0 +1,35 @@
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: openai@4.104.0
+npm error Found: zod@4.3.6
+npm error node_modules/zod
+npm error   zod@"^3.25 || ^4.0" from @modelcontextprotocol/sdk@1.26.0
+npm error   node_modules/@modelcontextprotocol/sdk
+npm error     @modelcontextprotocol/sdk@"^1.26.0" from shadcn@3.8.5
+npm error     node_modules/shadcn
+npm error       dev shadcn@"^3.8.5" from the root project
+npm error   zod@"^3.25.0 || ^4.0.0" from eslint-plugin-react-hooks@7.0.1
+npm error   node_modules/eslint-plugin-react-hooks
+npm error     eslint-plugin-react-hooks@"^7.0.0" from eslint-config-next@16.1.6
+npm error     node_modules/eslint-config-next
+npm error       dev eslint-config-next@"16.1.6" from the root project
+npm error   3 more (zod-to-json-schema, zod-validation-error, the root project)
+npm error
+npm error Could not resolve dependency:
+npm error peerOptional zod@"^3.23.8" from openai@4.104.0
+npm error node_modules/openai
+npm error   openai@"^4.86.1" from the root project
+npm error
+npm error Conflicting peer dependency: zod@3.25.76
+npm error node_modules/zod
+npm error   peerOptional zod@"^3.23.8" from openai@4.104.0
+npm error   node_modules/openai
+npm error     openai@"^4.86.1" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry this command with --force or --legacy-peer-deps to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /Users/rapha/.npm/_logs/2026-05-02T21_20_22_299Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /Users/rapha/.npm/_logs/2026-05-02T21_20_22_299Z-debug-0.log

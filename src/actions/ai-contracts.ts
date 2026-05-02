@@ -53,6 +53,7 @@ function getOpenAIClient() {
 export async function createContractTemplate(data: z.infer<typeof ContractTemplateSchema>) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
     // Validar dados
     const validated = ContractTemplateSchema.parse(data);
@@ -62,7 +63,7 @@ export async function createContractTemplate(data: z.infer<typeof ContractTempla
     if (!user) throw new Error('Não autorizado');
 
     // Obter workspace do usuário
-    const { data: membership } = await supabase
+    const { data: membership } = await db
       .from('workspace_members')
       .select('workspace_id, role')
       .eq('user_id', user.id)
@@ -72,7 +73,7 @@ export async function createContractTemplate(data: z.infer<typeof ContractTempla
     if (!membership) throw new Error('Usuário não é owner de nenhum workspace');
 
     // Criar template
-    const { data: template, error } = await supabase
+    const { data: template, error } = await db
       .from('contract_templates')
       .insert({
         workspace_id: membership.workspace_id,
@@ -105,6 +106,7 @@ export async function createContractTemplate(data: z.infer<typeof ContractTempla
 export async function generateContract(data: z.infer<typeof GenerateContractSchema>) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
     const validated = GenerateContractSchema.parse(data);
     
@@ -112,7 +114,7 @@ export async function generateContract(data: z.infer<typeof GenerateContractSche
     if (!user) throw new Error('Não autorizado');
 
     // Buscar template
-    const { data: template } = await supabase
+    const { data: template } = await db
       .from('contract_templates')
       .select('*')
       .eq('id', validated.templateId)
@@ -130,7 +132,7 @@ export async function generateContract(data: z.infer<typeof GenerateContractSche
     const title = validated.title || `${template.name} - ${new Date().toLocaleDateString('pt-BR')}`;
 
     // Criar contrato
-    const { data: contract, error } = await supabase
+    const { data: contract, error } = await db
       .from('contracts')
       .insert({
         project_id: validated.projectId,
@@ -163,13 +165,14 @@ export async function generateContract(data: z.infer<typeof GenerateContractSche
 export async function analyzeProcessWithAI(data: z.infer<typeof AnalyzeProcessSchema>) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     const validated = AnalyzeProcessSchema.parse(data);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Não autorizado');
 
     // Buscar detalhes do projeto para contexto
-    const { data: project } = await supabase
+    const { data: project } = await db
       .from('projects')
       .select('name, description, status')
       .eq('id', validated.projectId)
@@ -225,7 +228,7 @@ FORMATO DE RESPOSTA (JSON):
     const analysis = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Salvar análise no banco
-    const { data: savedAnalysis, error } = await supabase
+    const { data: savedAnalysis, error } = await db
       .from('process_analyses')
       .insert({
         project_id: validated.projectId,
@@ -261,13 +264,14 @@ FORMATO DE RESPOSTA (JSON):
 export async function generateTasksWithAI(data: z.infer<typeof GenerateTasksSchema>) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     const validated = GenerateTasksSchema.parse(data);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Não autorizado');
 
     // Buscar detalhes do projeto
-    const { data: project } = await supabase
+    const { data: project } = await db
       .from('projects')
       .select('name, description, phases(id, name)')
       .eq('id', validated.projectId)
@@ -330,7 +334,7 @@ Gere entre 5-15 tarefas dependendo da complexidade.
     const tasks = parsed.tasks || [];
 
     // Salvar tarefas geradas
-    const { data: savedTasks, error } = await supabase
+    const { data: savedTasks, error } = await db
       .from('ai_generated_tasks')
       .insert(
         tasks.map((task: any) => ({
@@ -367,6 +371,7 @@ Gere entre 5-15 tarefas dependendo da complexidade.
 export async function analyzeGitHubWithAI(data: z.infer<typeof AnalyzeGitHubSchema>) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     const validated = AnalyzeGitHubSchema.parse(data);
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -460,7 +465,7 @@ FORMATO DE RESPOSTA (JSON):
     const analysis = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Salvar análise
-    const { data: savedAnalysis, error } = await supabase
+    const { data: savedAnalysis, error } = await db
       .from('github_ai_analyses')
       .insert({
         repository_owner: owner,
@@ -498,8 +503,9 @@ FORMATO DE RESPOSTA (JSON):
 export async function getContractTemplates(workspaceId: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('contract_templates')
       .select('*')
       .eq('workspace_id', workspaceId)
@@ -523,8 +529,9 @@ export async function getContractTemplates(workspaceId: string) {
 export async function getProcessAnalyses(projectId: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('process_analyses')
       .select('*')
       .eq('project_id', projectId)
@@ -548,8 +555,9 @@ export async function getProcessAnalyses(projectId: string) {
 export async function getAITasks(projectId: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('ai_generated_tasks')
       .select('*')
       .eq('project_id', projectId)
@@ -579,6 +587,7 @@ export async function generateContractWithDescription(data: {
 }) {
   try {
     const supabase = await createClient()
+    const db = supabase as any
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Não autorizado')
 
@@ -638,7 +647,7 @@ export async function saveGeneratedContract(data: {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Não autorizado')
 
-    const { data: contract, error } = await supabase
+    const { data: contract, error } = await db
       .from('contracts')
       .insert({
         ...(data.projectId ? { project_id: data.projectId } : {}),
@@ -810,12 +819,13 @@ Gere uma análise em JSON:
 export async function convertAITaskToRealTask(aiTaskId: string, phaseId?: string) {
   try {
     const supabase = await createClient();
+    const db = supabase as any;
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Não autorizado');
 
     // Buscar tarefa IA
-    const { data: aiTask } = await supabase
+    const { data: aiTask } = await db
       .from('ai_generated_tasks')
       .select('*')
       .eq('id', aiTaskId)
@@ -824,7 +834,7 @@ export async function convertAITaskToRealTask(aiTaskId: string, phaseId?: string
     if (!aiTask) throw new Error('Tarefa não encontrada');
 
     // Criar tarefa real
-    const { data: task, error: taskError } = await supabase
+    const { data: task, error: taskError } = await db
       .from('tasks')
       .insert({
         project_id: aiTask.project_id,
@@ -843,7 +853,7 @@ export async function convertAITaskToRealTask(aiTaskId: string, phaseId?: string
     if (taskError) throw taskError;
 
     // Atualizar status da tarefa IA
-    await supabase
+    await db
       .from('ai_generated_tasks')
       .update({ status: 'converted', converted_task_id: task.id })
       .eq('id', aiTaskId);

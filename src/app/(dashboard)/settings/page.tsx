@@ -142,6 +142,21 @@ export default async function SettingsPage() {
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </a>
               <a
+                href="/settings/whatsapp"
+                className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">WhatsApp Business</p>
+                    <p className="text-xs text-muted-foreground">Integracao real via Evolution API</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a
                 href="/settings/audit-log"
                 className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors group"
               >

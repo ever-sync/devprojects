@@ -2773,7 +2773,7 @@ export type Database = {
         Row: {
           id: string
           workspace_id: string
-          service_type: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'email' | 'custom'
+          service_type: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'whatsapp' | 'email' | 'custom'
           name: string
           credentials: Json
           is_active: boolean | null
@@ -2784,7 +2784,7 @@ export type Database = {
         Insert: {
           id?: string
           workspace_id: string
-          service_type: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'email' | 'custom'
+          service_type: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'whatsapp' | 'email' | 'custom'
           name: string
           credentials?: Json
           is_active?: boolean | null
@@ -2794,7 +2794,7 @@ export type Database = {
         }
         Update: {
           workspace_id?: string
-          service_type?: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'email' | 'custom'
+          service_type?: 'zapier' | 'n8n' | 'make' | 'slack' | 'discord' | 'whatsapp' | 'email' | 'custom'
           name?: string
           credentials?: Json
           is_active?: boolean | null
@@ -2878,6 +2878,14 @@ export type Database = {
       increment_workflow_execution_count: {
         Args: { p_workflow_id: string }
         Returns: void
+      }
+      match_documents: {
+        Args: {
+          query_embedding: number[]
+          match_count?: number
+          filter?: Json
+        }
+        Returns: Json[]
       }
     }
     Enums: {

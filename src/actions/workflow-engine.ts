@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { sendSlackNotification } from '@/lib/slack';
 import { sendDiscordNotification } from '@/lib/discord';
+import { sendWhatsAppNotification } from '@/lib/whatsapp';
 
 // Schemas de validação
 export const workflowDefinitionSchema = z.object({
@@ -36,7 +37,7 @@ export const webhookEndpointSchema = z.object({
 });
 
 export const externalIntegrationSchema = z.object({
-  service_type: z.enum(['zapier', 'n8n', 'make', 'slack', 'discord', 'email', 'custom']),
+  service_type: z.enum(['zapier', 'n8n', 'make', 'slack', 'discord', 'whatsapp', 'email', 'custom']),
   name: z.string().min(1, 'Nome é obrigatório'),
   credentials: z.record(z.string(), z.any()).default({}),
   is_active: z.boolean().default(true)
@@ -858,6 +859,27 @@ async function executeStep(
         sent: result.sent,
         reason: result.reason,
         channel,
+        message,
+      };
+    }
+
+    case 'whatsapp_message': {
+      const projectId = typeof config.project_id === 'string'
+        ? config.project_id
+        : typeof context.payload.project_id === 'string'
+        ? context.payload.project_id
+        : undefined;
+      const message = typeof config.message === 'string' ? config.message : '';
+      const number = typeof config.number === 'string' ? config.number : undefined;
+      const result = await sendWhatsAppNotification({
+        projectId,
+        number,
+        message: message || 'Mensagem enviada por workflow',
+      });
+      return {
+        sent: result.sent,
+        reason: result.reason,
+        number,
         message,
       };
     }
