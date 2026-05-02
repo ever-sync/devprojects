@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { z } from 'zod'
+import { sendEmail, buildStatusReportEmail } from '@/lib/email'
 
 const generateReportSchema = z.object({
   projectId: z.string().uuid(),
@@ -196,20 +197,61 @@ export async function markReportSent(id: string, sentTo: string[]) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data, error } = await supabase
+  // Buscar relatório e dados do projeto para o email
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: report } = await (supabase as any)
+    .from('client_status_reports')
+    .select('*, projects(name, clients(name, email))')
+    .eq('id', id)
+    .single() as { data: Record<string, any> | null }
+
+  if (!report) return { error: 'Relatório não encontrado' }
+
+  const project = report.projects as { name: string; clients: { name: string; email: string } | null } | null
+  const clientName = project?.clients?.name ?? 'Cliente'
+  const projectName = project?.name ?? 'Projeto'
+  const clientEmail = project?.clients?.email
+
+  // Enviar email para cada destinatário
+  const recipients = sentTo.length > 0 ? sentTo : (clientEmail ? [clientEmail] : [])
+
+  if (recipients.length > 0) {
+    const { html } = buildStatusReportEmail({
+      clientName,
+      projectName,
+      periodStart: new Date(report.period_start as string).toLocaleDateString('pt-BR'),
+      periodEnd: new Date(report.period_end as string).toLocaleDateString('pt-BR'),
+      contentMarkdown: (report.content_markdown as string) ?? '',
+      highlights: (report.highlights as string[]) ?? [],
+      nextSteps: (report.next_steps as string[]) ?? [],
+    })
+
+    const emailResult = await sendEmail({
+      to: recipients,
+      subject: `Relatório de Status — ${projectName}`,
+      html,
+    })
+
+    if (emailResult.error) {
+      return { error: `Erro ao enviar email: ${emailResult.error}` }
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('client_status_reports')
     .update({
       status: 'sent',
       sent_at: new Date().toISOString(),
-      sent_to: sentTo,
+      sent_to: recipients,
     })
     .eq('id', id)
     .select('project_id')
-    .single()
+    .single() as { data: { project_id: string } | null; error: Error | null }
 
-  if (error) return { error: error.message }
+  if (error) return { error: (error as Error).message }
 
-  revalidatePath(`/projects/${data.project_id}/reports`)
+  revalidatePath(`/projects/${(data as { project_id: string }).project_id}/reports`)
   return { error: null }
 }
 

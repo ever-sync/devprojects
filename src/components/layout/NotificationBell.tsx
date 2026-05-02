@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { markNotificationRead, markAllNotificationsRead } from '@/actions/notifications'
+import { createClient } from '@/lib/supabase/client'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Notification } from '@/types'
@@ -21,6 +22,44 @@ interface NotificationBellProps {
 export function NotificationBell({ notifications: initial, userId }: NotificationBellProps) {
   const [items, setItems] = useState(initial)
   const unread = items.filter((n) => !n.read_at).length
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          setItems((prev) => [payload.new as Notification, ...prev])
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          setItems((prev) =>
+            prev.map((n) => (n.id === (payload.new as Notification).id ? (payload.new as Notification) : n))
+          )
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId])
 
   async function handleMarkRead(id: string) {
     setItems((prev) =>

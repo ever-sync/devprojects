@@ -8,8 +8,22 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error && data.user) {
+      // Restrição de domínio para SSO Google Workspace
+      const allowedDomain = process.env.GOOGLE_WORKSPACE_DOMAIN
+      if (allowedDomain) {
+        const email = data.user.email ?? ''
+        const provider = data.user.app_metadata?.provider
+        if (provider === 'google' && !email.endsWith(`@${allowedDomain}`)) {
+          await supabase.auth.signOut()
+          return NextResponse.redirect(
+            `${origin}/login?error=domain_not_allowed&domain=${allowedDomain}`
+          )
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

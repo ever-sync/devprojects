@@ -5,13 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { analyzeProcess, generateTasksFromText } from '@/actions/ai-features';
+import { analyzeProcess } from '@/actions/ai-contracts';
 import { toast } from 'sonner';
 import { Brain, Target, AlertTriangle, TrendingUp, Loader2, CheckCircle2, Clock, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
-export function ProcessAnalyzer() {
+interface ProcessAnalyzerProps {
+  projectId?: string;
+}
+
+export function ProcessAnalyzer({ projectId }: ProcessAnalyzerProps) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
   const [processDescription, setProcessDescription] = useState('');
@@ -26,7 +30,7 @@ export function ProcessAnalyzer() {
     try {
       const result = await analyzeProcess({
         description: processDescription,
-        projectId: 'project-id-placeholder', // TODO: Get from context
+        projectId,
       });
 
       if (result.success && result.data) {

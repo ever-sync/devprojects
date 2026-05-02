@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { OpenAI } from 'openai';
 import { z } from 'zod';
+import { logError } from '@/lib/logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,9 +29,11 @@ export async function searchRelevantDocuments(query: string, projectId: string, 
   try {
     const supabase = await createClient();
     
-    // Primeiro, gerar embedding da query (simulado - em produção usaria API de embeddings)
-    // Na implementação real, chamaria openai.embeddings.create()
-    const mockEmbedding = Array(1536).fill(0).map(() => Math.random());
+    const embeddingResponse = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: query,
+    });
+    const mockEmbedding = embeddingResponse.data[0].embedding;
     
     const { data, error } = await supabase.rpc('match_documents', {
       query_embedding: mockEmbedding,
@@ -39,13 +42,13 @@ export async function searchRelevantDocuments(query: string, projectId: string, 
     });
 
     if (error) {
-      console.error('Erro na busca vetorial:', error);
+      logError('Erro na busca vetorial', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('Erro ao buscar documentos:', error);
+    logError('Erro ao buscar documentos', error);
     return [];
   }
 }
@@ -122,7 +125,7 @@ Instruções:
       .single();
 
     if (convError) {
-      console.error('Erro ao criar conversa:', convError);
+      logError('Erro ao criar conversa', convError);
     }
 
     // 6. Salvar mensagem
@@ -148,7 +151,7 @@ Instruções:
       conversationId: conversation?.id,
     };
   } catch (error) {
-    console.error('Erro ao processar pergunta:', error);
+    logError('Erro ao processar pergunta', error);
     if (error instanceof z.ZodError) {
       return { error: 'Dados inválidos', details: error.errors };
     }
@@ -175,7 +178,7 @@ export async function loadConversation(conversationId: string) {
 
     return { success: true, messages: data || [] };
   } catch (error) {
-    console.error('Erro ao carregar conversa:', error);
+    logError('Erro ao carregar conversa', error);
     return { error: 'Falha ao carregar histórico' };
   }
 }
@@ -200,7 +203,7 @@ export async function listProjectConversations(projectId: string) {
 
     return { success: true, conversations: data || [] };
   } catch (error) {
-    console.error('Erro ao listar conversas:', error);
+    logError('Erro ao listar conversas', error);
     return { error: 'Falha ao listar conversas' };
   }
 }
@@ -218,8 +221,11 @@ export async function indexDocumentForSearch(documentData: {
   try {
     const supabase = await createClient();
     
-    // Gerar embedding (em produção, usar API real)
-    const mockEmbedding = Array(1536).fill(0).map(() => Math.random());
+    const embeddingResponse = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: documentData.content,
+    });
+    const mockEmbedding = embeddingResponse.data[0].embedding;
     
     const { data, error } = await supabase
       .from('vector_documents')
@@ -235,13 +241,13 @@ export async function indexDocumentForSearch(documentData: {
       .single();
 
     if (error) {
-      console.error('Erro ao indexar documento:', error);
+      logError('Erro ao indexar documento', error);
       return { error: 'Falha ao indexar documento' };
     }
 
     return { success: true, document: data };
   } catch (error) {
-    console.error('Erro ao indexar:', error);
+    logError('Erro ao indexar', error);
     return { error: 'Falha ao indexar documento' };
   }
 }
@@ -272,7 +278,7 @@ export async function summarizeDiscussion(messages: string[]) {
       summary: completion.choices[0]?.message?.content || '',
     };
   } catch (error) {
-    console.error('Erro ao resumir:', error);
+    logError('Erro ao resumir', error);
     return { error: 'Falha ao resumir discussão' };
   }
 }

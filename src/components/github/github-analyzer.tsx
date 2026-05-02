@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { analyzeGitHubRepo } from '@/actions/ai-features';
+import { analyzeGitHubRepo } from '@/actions/ai-contracts';
 import { toast } from 'sonner';
 import { Github, Loader2, GitBranch, GitCommit, GitPullRequest, Code, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -33,11 +33,15 @@ interface GitHubAnalysis {
   };
 }
 
-export function GitHubAnalyzer() {
+interface GitHubAnalyzerProps {
+  projectId?: string;
+}
+
+export function GitHubAnalyzer({ projectId: propProjectId }: GitHubAnalyzerProps) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<GitHubAnalysis | null>(null);
   const [repoUrl, setRepoUrl] = useState('');
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useState(propProjectId || '');
 
   const handleAnalyze = async () => {
     if (!repoUrl.trim()) {
@@ -46,19 +50,19 @@ export function GitHubAnalyzer() {
     }
 
     // Extract repo name from URL
-    const match = repoUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+    const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+)/);
     if (!match) {
       toast.error('URL do GitHub inválida. Use o formato: https://github.com/user/repo');
       return;
     }
 
-    const repoName = match[1];
+    const repoName = match[1].replace(/\.git$/, '');
     setLoading(true);
 
     try {
       const result = await analyzeGitHubRepo({
         repoName,
-        projectId: projectId || 'project-id-placeholder', // TODO: Get from context
+        projectId: projectId || undefined,
       });
 
       if (result.success && result.data) {
@@ -113,15 +117,17 @@ export function GitHubAnalyzer() {
               onChange={(e) => setRepoUrl(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="projectId">ID do Projeto (Opcional)</Label>
-            <Input
-              id="projectId"
-              placeholder="project-id"
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-            />
-          </div>
+          {!propProjectId && (
+            <div className="space-y-2">
+              <Label htmlFor="projectId">ID do Projeto (Opcional)</Label>
+              <Input
+                id="projectId"
+                placeholder="UUID do projeto para vincular análise"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <Button onClick={handleAnalyze} disabled={loading || !repoUrl.trim()} className="w-full" size="lg">

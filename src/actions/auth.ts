@@ -5,6 +5,32 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getAppUrl } from '@/lib/app-url'
 
+export async function signInWithGoogle() {
+  const supabase = await createClient()
+  const appUrl = getAppUrl()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${appUrl}/api/auth/callback`,
+      queryParams: {
+        // Restringe ao Google Workspace do domínio (configure GOOGLE_WORKSPACE_DOMAIN no env)
+        ...(process.env.GOOGLE_WORKSPACE_DOMAIN
+          ? { hd: process.env.GOOGLE_WORKSPACE_DOMAIN }
+          : {}),
+        access_type: 'offline',
+        prompt: 'select_account',
+      },
+    },
+  })
+
+  if (error || !data.url) {
+    redirect('/login?error=google_oauth_failed')
+  }
+
+  redirect(data.url)
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient()
 

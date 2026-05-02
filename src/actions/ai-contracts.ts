@@ -569,6 +569,242 @@ export async function getAITasks(projectId: string) {
 }
 
 /**
+ * Gera dados de contrato a partir de uma descrição usando IA
+ */
+export async function generateContractWithDescription(data: {
+  description: string
+  clientName: string
+  companyName: string
+  additionalInfo?: string
+}) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autorizado')
+
+    const openai = getOpenAIClient()
+
+    const prompt = `Você é um especialista em contratos de prestação de serviços de tecnologia.
+
+INFORMAÇÕES:
+- Cliente: ${data.clientName || 'A definir'}
+- Empresa prestadora: ${data.companyName || 'A definir'}
+- Descrição do projeto: ${data.description}
+${data.additionalInfo ? `- Informações adicionais: ${data.additionalInfo}` : ''}
+
+Gere os dados estruturados para um contrato profissional em JSON:
+{
+  "title": "título do contrato",
+  "scopeItems": ["item do escopo 1", "item 2", ...],
+  "terms": ["cláusula 1", "cláusula 2", ...],
+  "deliverables": ["entregável 1", ...],
+  "value": "valor sugerido ou 'A combinar'"
+}`
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'Responda apenas com JSON válido, sem markdown.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    })
+
+    const result = JSON.parse(completion.choices[0].message.content || '{}')
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao gerar contrato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro ao gerar contrato' }
+  }
+}
+
+/**
+ * Salva contrato gerado por IA no banco
+ */
+export async function saveGeneratedContract(data: {
+  clientId?: string
+  projectId?: string
+  title: string
+  contractNumber: string
+  startDate?: string
+  endDate?: string
+  value?: string
+  status: string
+  metadata: Record<string, unknown>
+}) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autorizado')
+
+    const { data: contract, error } = await supabase
+      .from('contracts')
+      .insert({
+        ...(data.projectId ? { project_id: data.projectId } : {}),
+        title: data.title,
+        contract_number: data.contractNumber,
+        start_date: data.startDate || null,
+        end_date: data.endDate || null,
+        value: data.value ? parseFloat(data.value.replace(/[^0-9.]/g, '')) || null : null,
+        status: data.status,
+        metadata: data.metadata,
+        created_by: user.id,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    if (data.projectId) revalidatePath(`/projects/${data.projectId}/contracts`)
+    return { success: true, data: contract }
+  } catch (error) {
+    console.error('Erro ao salvar contrato:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro ao salvar' }
+  }
+}
+
+/**
+ * Analisa processo descrito em texto e retorna diagnóstico estruturado
+ */
+export async function analyzeProcess(data: {
+  description: string
+  projectId?: string
+}) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autorizado')
+
+    const openai = getOpenAIClient()
+
+    const prompt = `Você é um especialista em otimização de processos de tecnologia.
+
+PROCESSO A ANALISAR:
+${data.description}
+
+Analise e retorne um JSON com:
+{
+  "efficiencyScore": número de 0 a 100,
+  "executiveSummary": "resumo executivo da análise",
+  "bottlenecks": [
+    {"description": "...", "impact": "...", "suggestion": "..."}
+  ],
+  "risks": [
+    {"description": "...", "severity": "low|medium|high", "mitigation": "..."}
+  ],
+  "recommendations": [
+    {"title": "...", "description": "...", "expectedImpact": "..."}
+  ]
+}`
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'Responda apenas com JSON válido, sem markdown.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    })
+
+    const result = JSON.parse(completion.choices[0].message.content || '{}')
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao analisar processo:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro na análise' }
+  }
+}
+
+/**
+ * Analisa repositório GitHub e retorna diagnóstico de saúde e qualidade
+ */
+export async function analyzeGitHubRepo(data: {
+  repoName: string
+  projectId?: string
+}) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autorizado')
+
+    const openai = getOpenAIClient()
+
+    // Buscar dados reais do GitHub se possível
+    const githubToken = process.env.GITHUB_TOKEN
+    let repoData: Record<string, unknown> = {}
+
+    if (githubToken) {
+      const [repoRes, commitsRes, prsRes] = await Promise.allSettled([
+        fetch(`https://api.github.com/repos/${data.repoName}`, {
+          headers: { Authorization: `Bearer ${githubToken}`, 'User-Agent': 'ReobotLabs' },
+        }),
+        fetch(`https://api.github.com/repos/${data.repoName}/commits?per_page=10`, {
+          headers: { Authorization: `Bearer ${githubToken}`, 'User-Agent': 'ReobotLabs' },
+        }),
+        fetch(`https://api.github.com/repos/${data.repoName}/pulls?state=all&per_page=20`, {
+          headers: { Authorization: `Bearer ${githubToken}`, 'User-Agent': 'ReobotLabs' },
+        }),
+      ])
+
+      if (repoRes.status === 'fulfilled' && repoRes.value.ok) {
+        repoData.repo = await repoRes.value.json()
+      }
+      if (commitsRes.status === 'fulfilled' && commitsRes.value.ok) {
+        repoData.recentCommits = await commitsRes.value.json()
+      }
+      if (prsRes.status === 'fulfilled' && prsRes.value.ok) {
+        repoData.pullRequests = await prsRes.value.json()
+      }
+    }
+
+    const prompt = `Você é um especialista em análise de qualidade de código e saúde de projetos.
+
+REPOSITÓRIO: ${data.repoName}
+DADOS: ${JSON.stringify(repoData, null, 2).slice(0, 3000)}
+
+Gere uma análise em JSON:
+{
+  "repoName": "${data.repoName}",
+  "totalCommits": número estimado,
+  "totalPRs": número estimado,
+  "contributors": número estimado,
+  "codeQuality": {
+    "score": 0-100,
+    "issues": [],
+    "suggestions": ["sugestão 1", "sugestão 2"]
+  },
+  "activity": {
+    "recentCommits": [{"message": "...", "author": "...", "date": "...", "hash": "abc1234"}],
+    "activeBranches": ["main", "develop"],
+    "openPRs": número
+  },
+  "health": {
+    "score": 0-100,
+    "status": "excellent|good|warning|critical",
+    "recommendations": ["recomendação 1"]
+  }
+}`
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'Responda apenas com JSON válido, sem markdown.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    })
+
+    const result = JSON.parse(completion.choices[0].message.content || '{}')
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Erro ao analisar repositório:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Erro na análise' }
+  }
+}
+
+/**
  * Converte tarefa gerada por IA em tarefa real
  */
 export async function convertAITaskToRealTask(aiTaskId: string, phaseId?: string) {

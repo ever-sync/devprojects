@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { generateContract, createContract, getContractTemplates } from '@/actions/contracts';
+import { generateContractWithDescription, saveGeneratedContract } from '@/actions/ai-contracts';
 import { toast } from 'sonner';
 import { FileText, Download, Sparkles, Loader2 } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -20,7 +20,12 @@ interface ContractTemplate {
   content: string;
 }
 
-export function ContractGenerator() {
+interface ContractGeneratorProps {
+  projectId?: string;
+  clientId?: string;
+}
+
+export function ContractGenerator({ projectId, clientId }: ContractGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedData, setGeneratedData] = useState<any>(null);
@@ -46,7 +51,7 @@ export function ContractGenerator() {
 
     setGenerating(true);
     try {
-      const result = await generateContract({
+      const result = await generateContractWithDescription({
         description: formData.projectDescription,
         clientName: formData.clientName,
         companyName: formData.companyName,
@@ -75,10 +80,9 @@ export function ContractGenerator() {
 
     setLoading(true);
     try {
-      const result = await createContract({
-        templateId: formData.templateId || 'default',
-        clientId: 'client-id-placeholder', // TODO: Get from context
-        projectId: 'project-id-placeholder', // TODO: Get from context
+      const result = await saveGeneratedContract({
+        clientId: clientId,
+        projectId: projectId,
         title: generatedData.title || 'Contrato Gerado',
         contractNumber: `CTR-${Date.now()}`,
         startDate: formData.startDate,

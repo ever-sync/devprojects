@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 function verifySignature(payload: string, signature: string | null, secret: string): boolean {
   if (!signature) return false
@@ -11,6 +12,12 @@ function verifySignature(payload: string, signature: string | null, secret: stri
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request)
+  const { allowed } = checkRateLimit(`github:${ip}`, 60)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const secret = process.env.GITHUB_WEBHOOK_SECRET
   if (!secret) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })

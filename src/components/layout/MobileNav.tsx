@@ -16,6 +16,9 @@ import {
   MessageCircle,
   FileText,
   Headphones,
+  BarChart3,
+  FileBadge,
+  ListChecks,
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -33,8 +36,11 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3, adminOnly: true },
+  { label: 'Propostas', href: '/proposals', icon: FileBadge },
   { label: 'Projetos', href: '/projects', icon: FolderKanban },
   { label: 'Clientes', href: '/clients', icon: Users, adminOnly: true },
+  { label: 'Delegações', href: '/delegations', icon: ListChecks, adminOnly: true },
 ]
 
 const secondaryNavItems: NavItem[] = [
