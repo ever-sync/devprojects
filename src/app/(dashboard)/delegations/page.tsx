@@ -33,16 +33,20 @@ export default async function DelegationsPage() {
     .neq('status', 'done')
     .order('updated_at', { ascending: true })
 
-  const normalizedTasks = (tasks ?? []).map((t) => ({
-    id: t.id,
-    title: t.title,
-    status: t.status,
-    priority: t.priority,
-    updated_at: t.updated_at,
-    project_id: t.project_id,
-    project_name: (t.projects as { name: string } | null)?.name ?? '',
-    assignee: t.assignee as { id: string; full_name: string; email: string } | null,
-  }))
+  const normalizedTasks = (tasks ?? []).map((t) => {
+    const projectRef = Array.isArray(t.projects) ? t.projects[0] ?? null : t.projects
+    const assigneeRef = Array.isArray(t.assignee) ? t.assignee[0] ?? null : t.assignee
+    return {
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      updated_at: t.updated_at,
+      project_id: t.project_id,
+      project_name: (projectRef as { name: string } | null)?.name ?? '',
+      assignee: assigneeRef as { id: string; full_name: string; email: string } | null,
+    }
+  })
 
   return (
     <div>

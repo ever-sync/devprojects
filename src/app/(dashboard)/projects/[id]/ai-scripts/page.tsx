@@ -11,6 +11,7 @@ interface Props {
 export default async function AIScriptsPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -30,7 +31,7 @@ export default async function AIScriptsPage({ params }: Props) {
 
   if (!project) notFound()
 
-  const { data: scripts } = await supabase
+  const { data: scripts } = await db
     .from('ai_scripts')
     .select(`
       *,

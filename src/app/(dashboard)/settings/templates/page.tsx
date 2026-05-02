@@ -21,6 +21,27 @@ export default async function TemplatesSettingsPage() {
     .from('phase_templates')
     .select('*, phase_template_items(*)')
     .order('name')
+  const normalizedTemplates: Array<{
+    id: string
+    name: string
+    description: string | null
+    project_type: 'saas' | 'automation' | 'ai_agent' | null
+    phase_template_items: Array<{ id?: string; name: string }>
+  }> = (templates ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    project_type:
+      template.project_type === 'saas' ||
+      template.project_type === 'automation' ||
+      template.project_type === 'ai_agent'
+        ? template.project_type
+        : null,
+    phase_template_items: (template.phase_template_items ?? []).map((item) => ({
+      id: item.id,
+      name: item.name,
+    })),
+  }))
 
   return (
     <div className="space-y-6">
@@ -33,7 +54,7 @@ export default async function TemplatesSettingsPage() {
         ]}
       />
 
-      <TemplateManagement initialTemplates={templates || []} />
+      <TemplateManagement initialTemplates={normalizedTemplates} />
     </div>
   )
 }

@@ -18,7 +18,8 @@ const updateScriptSchema = scriptSchema.partial().extend({
 })
 
 async function getProjectWorkspace(supabase: Awaited<ReturnType<typeof createClient>>, projectId: string) {
-  const { data: project } = await supabase
+  const db = supabase as any
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', projectId)
@@ -28,10 +29,11 @@ async function getProjectWorkspace(supabase: Awaited<ReturnType<typeof createCli
 
 export async function getAiScripts(projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado', data: null }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ai_scripts')
     .select(`
       *,
@@ -47,6 +49,7 @@ export async function getAiScripts(projectId: string) {
 
 export async function createAiScript(input: z.infer<typeof scriptSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
@@ -57,14 +60,14 @@ export async function createAiScript(input: z.infer<typeof scriptSchema>) {
   if (!workspaceId) return { error: 'Projeto não encontrado' }
 
   // Calcular próximo número de versão
-  const { count } = await supabase
+  const { count } = await db
     .from('ai_scripts')
     .select('*', { count: 'exact', head: true })
     .eq('project_id', parsed.data.projectId)
 
   const version = (count ?? 0) + 1
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ai_scripts')
     .insert({
       project_id: parsed.data.projectId,
@@ -89,10 +92,11 @@ export async function createAiScript(input: z.infer<typeof scriptSchema>) {
 
 export async function createScriptVersion(parentId: string, notes: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data: parent } = await supabase
+  const { data: parent } = await db
     .from('ai_scripts')
     .select('*')
     .eq('id', parentId)
@@ -101,12 +105,12 @@ export async function createScriptVersion(parentId: string, notes: string) {
   if (!parent) return { error: 'Script não encontrado' }
 
   // Próxima versão
-  const { count } = await supabase
+  const { count } = await db
     .from('ai_scripts')
     .select('*', { count: 'exact', head: true })
     .eq('project_id', parent.project_id)
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ai_scripts')
     .insert({
       project_id: parent.project_id,
@@ -132,6 +136,7 @@ export async function createScriptVersion(parentId: string, notes: string) {
 
 export async function updateAiScript(input: z.infer<typeof updateScriptSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
@@ -140,7 +145,7 @@ export async function updateAiScript(input: z.infer<typeof updateScriptSchema>) 
 
   const { id, projectId, ...rest } = parsed.data
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ai_scripts')
     .update(rest)
     .eq('id', id)
@@ -158,10 +163,11 @@ export async function promoteAiScript(
   targetStatus: 'staging' | 'production'
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data: script } = await supabase
+  const { data: script } = await db
     .from('ai_scripts')
     .select('project_id, workspace_id, name, channel')
     .eq('id', id)
@@ -171,8 +177,8 @@ export async function promoteAiScript(
 
   // Arquivar script atual em produção/staging (mesmo channel)
   if (targetStatus === 'production') {
-    await supabase
-      .from('ai_scripts')
+    await db
+    .from('ai_scripts')
       .update({ status: 'archived' })
       .eq('project_id', script.project_id)
       .eq('channel', script.channel)
@@ -180,7 +186,7 @@ export async function promoteAiScript(
       .neq('id', id)
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ai_scripts')
     .update({
       status: targetStatus,
@@ -199,10 +205,11 @@ export async function promoteAiScript(
 
 export async function deleteAiScript(id: string, projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('ai_scripts')
     .delete()
     .eq('id', id)

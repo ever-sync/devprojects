@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { generateContractWithDescription, saveGeneratedContract } from '@/actions/ai-contracts';
 import { toast } from 'sonner';
 import { FileText, Download, Sparkles, Loader2 } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import { ContractPDF } from '@/lib/pdf/templates';
 
 interface ContractTemplate {
   id: string;
@@ -116,6 +114,37 @@ export function ContractGenerator({ projectId, clientId }: ContractGeneratorProp
       setLoading(false);
     }
   };
+
+  const handleDownloadContract = () => {
+    if (!generatedData) return
+    const lines = [
+      `Contrato: ${generatedData.title || 'Contrato'}`,
+      `Numero: CTR-${Date.now()}`,
+      `Cliente: ${formData.clientName || 'Cliente'}`,
+      `Empresa: ${formData.companyName || 'Empresa'}`,
+      `Inicio: ${formData.startDate || '--/--/----'}`,
+      `Termino: ${formData.endDate || '--/--/----'}`,
+      `Valor: ${formData.value || 'R$ 0,00'}`,
+      '',
+      'Escopo:',
+      ...(generatedData.scopeItems || []).map((item: string) => `- ${item}`),
+      '',
+      'Termos:',
+      ...(generatedData.terms || []).map((item: string) => `- ${item}`),
+      '',
+      `Pagamento: ${formData.paymentTerms || 'A combinar'}`,
+    ]
+    const content = lines.join('\n')
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `contrato-${Date.now()}.md`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -292,28 +321,10 @@ export function ContractGenerator({ projectId, clientId }: ContractGeneratorProp
                 )}
               </Button>
 
-              <PDFDownloadLink
-                document={<ContractPDF data={{
-                  contractNumber: `CTR-${Date.now()}`,
-                  title: generatedData.title || 'Contrato',
-                  clientName: formData.clientName || 'Cliente',
-                  companyName: formData.companyName || 'Empresa',
-                  startDate: formData.startDate || '--/--/----',
-                  endDate: formData.endDate || '--/--/----',
-                  value: formData.value || 'R$ 0,00',
-                  scopeItems: generatedData.scopeItems || [],
-                  terms: generatedData.terms || [],
-                  paymentTerms: formData.paymentTerms || 'A combinar',
-                }} />}
-                fileName={`contrato-${Date.now()}.pdf`}
-              >
-                {({ loading }) => (
-                  <Button variant="outline" disabled={loading} className="flex-1">
-                    <Download className="mr-2 h-4 w-4" />
-                    {loading ? 'Gerando PDF...' : 'Baixar PDF'}
-                  </Button>
-                )}
-              </PDFDownloadLink>
+              <Button variant="outline" className="flex-1" onClick={handleDownloadContract}>
+                <Download className="mr-2 h-4 w-4" />
+                Baixar Contrato
+              </Button>
             </div>
           </div>
         )}

@@ -25,6 +25,20 @@ export default async function NewProjectPage({ searchParams }: Props) {
     supabase.from('clients').select('id, name').order('name'),
     supabase.from('phase_templates').select('id, name, project_type').order('name')
   ])
+  const normalizedTemplates: Array<{
+    id: string
+    name: string
+    project_type: 'saas' | 'automation' | 'ai_agent' | null
+  }> = (templatesRes.data ?? []).map((template) => ({
+    id: template.id,
+    name: template.name,
+    project_type:
+      template.project_type === 'saas' ||
+      template.project_type === 'automation' ||
+      template.project_type === 'ai_agent'
+        ? template.project_type
+        : null,
+  }))
 
   return (
     <div>
@@ -34,7 +48,7 @@ export default async function NewProjectPage({ searchParams }: Props) {
       />
       <ProjectForm 
         clients={clientsRes.data ?? []} 
-        templates={templatesRes.data ?? []}
+        templates={normalizedTemplates}
         defaultClientId={defaultClientId} 
       />
     </div>

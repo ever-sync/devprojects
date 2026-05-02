@@ -11,10 +11,11 @@ interface Props {
 export default async function ReportsPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -22,7 +23,7 @@ export default async function ReportsPage({ params }: Props) {
 
   if (profile?.role !== 'admin') redirect(`/projects/${id}`)
 
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('name, type, clients(name)')
     .eq('id', id)
@@ -30,7 +31,7 @@ export default async function ReportsPage({ params }: Props) {
 
   if (!project) notFound()
 
-  const { data: reports } = await supabase
+  const { data: reports } = await db
     .from('client_status_reports')
     .select('*')
     .eq('project_id', id)

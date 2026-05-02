@@ -9,7 +9,7 @@ const snapshotSchema = z.object({
   name: z.string().min(2).max(200),
   description: z.string().optional(),
   n8nWorkflowId: z.string().optional(),
-  workflowJson: z.record(z.any()).default({}),
+  workflowJson: z.record(z.string(), z.any()).default({}),
   environment: z.enum(['development', 'staging', 'production']).default('development'),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -20,7 +20,8 @@ const updateSnapshotSchema = snapshotSchema.partial().extend({
 })
 
 async function getProjectWorkspace(supabase: Awaited<ReturnType<typeof createClient>>, projectId: string) {
-  const { data: project } = await supabase
+  const db = supabase as any
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', projectId)
@@ -30,10 +31,11 @@ async function getProjectWorkspace(supabase: Awaited<ReturnType<typeof createCli
 
 export async function getN8nSnapshots(projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado', data: null }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('n8n_workflow_snapshots')
     .select(`
       *,
@@ -49,10 +51,11 @@ export async function getN8nSnapshots(projectId: string) {
 
 export async function getN8nExecutionLogs(projectId: string, snapshotId?: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado', data: null }
 
-  let query = supabase
+  let query = db
     .from('n8n_execution_logs')
     .select('*')
     .eq('project_id', projectId)
@@ -70,6 +73,7 @@ export async function getN8nExecutionLogs(projectId: string, snapshotId?: string
 
 export async function createN8nSnapshot(input: z.infer<typeof snapshotSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
@@ -79,14 +83,14 @@ export async function createN8nSnapshot(input: z.infer<typeof snapshotSchema>) {
   const workspaceId = await getProjectWorkspace(supabase, parsed.data.projectId)
   if (!workspaceId) return { error: 'Projeto não encontrado' }
 
-  const { count } = await supabase
+  const { count } = await db
     .from('n8n_workflow_snapshots')
     .select('*', { count: 'exact', head: true })
     .eq('project_id', parsed.data.projectId)
 
   const version = (count ?? 0) + 1
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('n8n_workflow_snapshots')
     .insert({
       project_id: parsed.data.projectId,
@@ -113,10 +117,11 @@ export async function createN8nSnapshot(input: z.infer<typeof snapshotSchema>) {
 
 export async function duplicateSnapshot(snapshotId: string, notes: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data: parent } = await supabase
+  const { data: parent } = await db
     .from('n8n_workflow_snapshots')
     .select('*')
     .eq('id', snapshotId)
@@ -124,12 +129,12 @@ export async function duplicateSnapshot(snapshotId: string, notes: string) {
 
   if (!parent) return { error: 'Snapshot não encontrado' }
 
-  const { count } = await supabase
+  const { count } = await db
     .from('n8n_workflow_snapshots')
     .select('*', { count: 'exact', head: true })
     .eq('project_id', parent.project_id)
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('n8n_workflow_snapshots')
     .insert({
       project_id: parent.project_id,
@@ -157,6 +162,7 @@ export async function duplicateSnapshot(snapshotId: string, notes: string) {
 
 export async function updateN8nSnapshot(input: z.infer<typeof updateSnapshotSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
@@ -169,7 +175,7 @@ export async function updateN8nSnapshot(input: z.infer<typeof updateSnapshotSche
   if (n8nWorkflowId !== undefined) updatePayload.n8n_workflow_id = n8nWorkflowId
   if (workflowJson !== undefined) updatePayload.workflow_json = workflowJson
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('n8n_workflow_snapshots')
     .update(updatePayload)
     .eq('id', id)
@@ -187,10 +193,11 @@ export async function promoteN8nSnapshot(
   targetStatus: 'staging' | 'production'
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data: snapshot } = await supabase
+  const { data: snapshot } = await db
     .from('n8n_workflow_snapshots')
     .select('project_id, workspace_id, name, n8n_workflow_id')
     .eq('id', id)
@@ -200,8 +207,8 @@ export async function promoteN8nSnapshot(
 
   // Arquivar versão atual em produção/staging do mesmo workflow
   if (targetStatus === 'production') {
-    await supabase
-      .from('n8n_workflow_snapshots')
+    await db
+    .from('n8n_workflow_snapshots')
       .update({ status: 'archived' })
       .eq('project_id', snapshot.project_id)
       .eq('status', 'production')
@@ -210,7 +217,7 @@ export async function promoteN8nSnapshot(
 
   const targetEnv = targetStatus === 'production' ? 'production' : 'staging'
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('n8n_workflow_snapshots')
     .update({
       status: targetStatus,
@@ -230,10 +237,11 @@ export async function promoteN8nSnapshot(
 
 export async function deleteN8nSnapshot(id: string, projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('n8n_workflow_snapshots')
     .delete()
     .eq('id', id)

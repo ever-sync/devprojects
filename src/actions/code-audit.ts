@@ -30,7 +30,9 @@ const auditCriteriaSchema = z.object({
 /**
  * Analisa código com IA e retorna score detalhado
  */
-export async function analyzeCodeWithAI(formData: FormData) {
+export async function analyzeCodeWithAI(
+  formData: Pick<FormData, 'get'> | { get: (key: string) => FormDataEntryValue | null },
+) {
   try {
     const validated = auditRequestSchema.parse({
       projectId: formData.get('projectId'),
@@ -41,7 +43,8 @@ export async function analyzeCodeWithAI(formData: FormData) {
       language: formData.get('language') || 'typescript',
     });
 
-    const supabase = await createClient();
+    const supabase = await createClient()
+    const db = supabase as any;
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -113,7 +116,7 @@ Forneça a resposta EXATAMENTE neste formato JSON:
     const analysis = JSON.parse(analysisResult);
 
     // Salvar análise no banco
-    const { data: auditRecord, error: saveError } = await supabase
+    const { data: auditRecord, error: saveError } = await db
       .from('code_audits')
       .insert({
         project_id: validated.projectId,
@@ -146,7 +149,7 @@ Forneça a resposta EXATAMENTE neste formato JSON:
   } catch (error) {
     console.error('Erro na auditoria de código:', error);
     if (error instanceof z.ZodError) {
-      return { error: 'Dados inválidos', details: error.errors };
+      return { error: 'Dados inválidos', details: error.issues };
     }
     if (error instanceof SyntaxError) {
       return { error: 'Falha ao processar resposta da IA' };
@@ -215,9 +218,10 @@ Formato JSON:
  */
 export async function compareAudits(projectId: string, auditIds: string[]) {
   try {
-    const supabase = await createClient();
+    const supabase = await createClient()
+    const db = supabase as any;
     
-    const { data: audits, error } = await supabase
+    const { data: audits, error } = await db
       .from('code_audits')
       .select('*')
       .in('id', auditIds)
@@ -288,9 +292,10 @@ Formato JSON:
  */
 export async function listProjectAudits(projectId: string, limit: number = 20) {
   try {
-    const supabase = await createClient();
+    const supabase = await createClient()
+    const db = supabase as any;
     
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('code_audits')
       .select('*')
       .eq('project_id', projectId)
@@ -321,8 +326,9 @@ export async function handleGitHubPRAudit(payload: any) {
     }
 
     // Buscar repositório vinculado no banco
-    const supabase = await createClient();
-    const { data: repo } = await supabase
+    const supabase = await createClient()
+    const db = supabase as any;
+    const { data: repo } = await db
       .from('github_repositories')
       .select('*, projects(*)')
       .eq('repository_id', payload.repository.id)

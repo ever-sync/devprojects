@@ -68,6 +68,7 @@ async function handleExecutionLog(
   supabase: ReturnType<typeof createAdminClient>,
   body: Record<string, unknown>
 ) {
+  const db = supabase as any
   // Aceita camelCase (n8n padrão) e snake_case
   const projectId = (body.project_id ?? body.projectId) as string | undefined
   const workspaceId = (body.workspace_id ?? body.workspaceId) as string | undefined
@@ -86,7 +87,7 @@ async function handleExecutionLog(
   // Resolver workspace_id a partir do project se não vier no payload
   let resolvedWorkspaceId = workspaceId
   if (!resolvedWorkspaceId) {
-    const { data: project } = await supabase
+    const { data: project } = await db
       .from('projects')
       .select('workspace_id')
       .eq('id', projectId)
@@ -103,7 +104,7 @@ async function handleExecutionLog(
     durationMs = new Date(finishedAt).getTime() - new Date(startedAt).getTime()
   }
 
-  const { error } = await supabase.from('n8n_execution_logs').insert({
+  const { error } = await db.from('n8n_execution_logs').insert({
     project_id: projectId,
     workspace_id: resolvedWorkspaceId,
     snapshot_id: snapshotId ?? null,

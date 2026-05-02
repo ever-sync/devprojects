@@ -82,7 +82,7 @@ export function AIFeaturesPanel({ projectId }: { projectId: string }) {
       if (response.success) {
         setResult({ type: 'contract', data: response.data });
       } else {
-        setError(response.error);
+        setError(response.error ?? 'Erro na operação');
       }
     } catch (err) {
       setError('Erro ao gerar contrato');
@@ -111,7 +111,7 @@ export function AIFeaturesPanel({ projectId }: { projectId: string }) {
       if (response.success) {
         setResult({ type: 'process', data: response.analysis });
       } else {
-        setError(response.error);
+        setError(response.error ?? 'Erro na operação');
       }
     } catch (err) {
       setError('Erro na análise do processo');
@@ -139,7 +139,7 @@ export function AIFeaturesPanel({ projectId }: { projectId: string }) {
       if (response.success) {
         setResult({ type: 'tasks', data: response.data, count: response.count });
       } else {
-        setError(response.error);
+        setError(response.error ?? 'Erro na operação');
       }
     } catch (err) {
       setError('Erro ao gerar tarefas');
@@ -167,7 +167,7 @@ export function AIFeaturesPanel({ projectId }: { projectId: string }) {
       if (response.success) {
         setResult({ type: 'github', data: response.analysis });
       } else {
-        setError(response.error);
+        setError(response.error ?? 'Erro na operação');
       }
     } catch (err) {
       setError('Erro na análise do GitHub');
@@ -181,7 +181,7 @@ export function AIFeaturesPanel({ projectId }: { projectId: string }) {
     try {
       const response = await convertAITaskToRealTask(taskId);
       if (response.success) {
-        setResult(prev => ({
+        setResult((prev: any) => ({
           ...prev,
           data: prev.data.map((t: any) => 
             t.id === taskId ? { ...t, converted: true, realTask: response.data } : t

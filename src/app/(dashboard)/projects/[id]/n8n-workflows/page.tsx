@@ -11,6 +11,7 @@ interface Props {
 export default async function N8NWorkflowsPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -31,7 +32,7 @@ export default async function N8NWorkflowsPage({ params }: Props) {
   if (!project) notFound()
 
   const [{ data: snapshots }, { data: executionLogs }] = await Promise.all([
-    supabase
+    db
       .from('n8n_workflow_snapshots')
       .select(`
         *,
@@ -40,7 +41,7 @@ export default async function N8NWorkflowsPage({ params }: Props) {
       `)
       .eq('project_id', id)
       .order('created_at', { ascending: false }),
-    supabase
+    db
       .from('n8n_execution_logs')
       .select('*')
       .eq('project_id', id)

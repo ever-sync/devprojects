@@ -12,14 +12,14 @@ const generateDocumentSchema = z.object({
   description: z.string().optional(),
   contentHtml: z.string(),
   contentMarkdown: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 })
 
 // Schema para análise de processos com IA
 const analyzeProcessSchema = z.object({
   projectId: z.string().uuid(),
   analysisType: z.enum(['bottleneck_detection', 'risk_analysis', 'efficiency_report']),
-  inputData: z.record(z.any()),
+  inputData: z.record(z.string(), z.any()),
   customInstructions: z.string().optional(),
 })
 
@@ -38,7 +38,7 @@ const analyzeGitHubSchema = z.object({
   repositoryId: z.string().uuid(),
   projectId: z.string().uuid(),
   analysisType: z.enum(['code_quality', 'security_audit', 'tech_debt', 'pr_review', 'commit_analysis']),
-  githubData: z.record(z.any()),
+  githubData: z.record(z.string(), z.any()),
   customInstructions: z.string().optional(),
 })
 
@@ -47,6 +47,7 @@ const analyzeGitHubSchema = z.object({
  */
 export async function generatePdfDocument(data: z.infer<typeof generateDocumentSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -55,11 +56,11 @@ export async function generatePdfDocument(data: z.infer<typeof generateDocumentS
 
   const parsed = generateDocumentSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar acesso ao projeto
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', data.projectId)
@@ -69,7 +70,7 @@ export async function generatePdfDocument(data: z.infer<typeof generateDocumentS
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -84,7 +85,7 @@ export async function generatePdfDocument(data: z.infer<typeof generateDocumentS
   // Exemplos: puppeteer, react-pdf, pdfmake, ou serviço externo como Documint
   
   // Por enquanto, vamos apenas registrar o documento
-  const { document, error } = await supabase
+  const { data: document, error } = await db
     .from('generated_documents')
     .insert({
       project_id: data.projectId,
@@ -106,7 +107,7 @@ export async function generatePdfDocument(data: z.infer<typeof generateDocumentS
   }
 
   // Marcar versões anteriores como não-latest
-  await supabase
+  await db
     .from('generated_documents')
     .update({ is_latest: false })
     .eq('project_id', data.projectId)
@@ -124,6 +125,7 @@ export async function generatePdfDocument(data: z.infer<typeof generateDocumentS
  */
 export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -132,11 +134,11 @@ export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessS
 
   const parsed = analyzeProcessSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar acesso e permissão
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', data.projectId)
@@ -146,7 +148,7 @@ export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessS
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -158,7 +160,7 @@ export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessS
   }
 
   // Obter configurações de IA do workspace
-  const { data: aiSettings } = await supabase
+  const { data: aiSettings } = await db
     .from('workspace_ai_settings')
     .select('*')
     .eq('workspace_id', project.workspace_id)
@@ -169,7 +171,7 @@ export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessS
   }
 
   // Criar registro de análise
-  const { analysis, error } = await supabase
+  const { analysis, error } = await db
     .from('process_analyses')
     .insert({
       project_id: data.projectId,
@@ -201,6 +203,7 @@ export async function analyzeProjectProcess(data: z.infer<typeof analyzeProcessS
  */
 export async function generateTasksWithAI(data: z.infer<typeof generateTasksSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -209,11 +212,11 @@ export async function generateTasksWithAI(data: z.infer<typeof generateTasksSche
 
   const parsed = generateTasksSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar acesso ao projeto
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', data.projectId)
@@ -223,7 +226,7 @@ export async function generateTasksWithAI(data: z.infer<typeof generateTasksSche
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -235,7 +238,7 @@ export async function generateTasksWithAI(data: z.infer<typeof generateTasksSche
   }
 
   // Obter configurações de IA
-  const { data: aiSettings } = await supabase
+  const { data: aiSettings } = await db
     .from('workspace_ai_settings')
     .select('*')
     .eq('workspace_id', project.workspace_id)
@@ -278,7 +281,7 @@ export async function generateTasksWithAI(data: z.infer<typeof generateTasksSche
   ]
 
   // Registrar tarefas geradas
-  const { aiTask, error } = await supabase
+  const { aiTask, error } = await db
     .from('ai_generated_tasks')
     .insert({
       project_id: data.projectId,
@@ -300,7 +303,7 @@ export async function generateTasksWithAI(data: z.infer<typeof generateTasksSche
   }
 
   // Log de uso de IA
-  await supabase.from('ai_usage_logs').insert({
+  await db.from('ai_usage_logs').insert({
     workspace_id: project.workspace_id,
     user_id: user.id,
     feature_type: 'task_generation',
@@ -329,6 +332,7 @@ export async function acceptAITasks(
   taskIndicesToAccept: number[]
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -336,7 +340,7 @@ export async function acceptAITasks(
   }
 
   // Obter tarefas geradas
-  const { data: aiTask } = await supabase
+  const { data: aiTask } = await db
     .from('ai_generated_tasks')
     .select('*')
     .eq('id', aiTaskId)
@@ -347,7 +351,7 @@ export async function acceptAITasks(
   }
 
   // Verificar permissão
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', aiTask.project_id)
@@ -357,7 +361,7 @@ export async function acceptAITasks(
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -376,8 +380,8 @@ export async function acceptAITasks(
     if (index >= 0 && index < suggestedTasks.length) {
       const taskData = suggestedTasks[index]
       
-      const { data: newTask } = await supabase
-        .from('tasks')
+      const { data: newTask } = await db
+    .from('tasks')
         .insert({
           project_id: aiTask.project_id,
           phase_id: aiTask.phase_id,
@@ -398,7 +402,7 @@ export async function acceptAITasks(
   }
 
   // Atualizar registro de tarefas IA
-  await supabase
+  await db
     .from('ai_generated_tasks')
     .update({
       accepted_task_ids: acceptedIds,
@@ -417,6 +421,7 @@ export async function acceptAITasks(
  */
 export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -425,11 +430,11 @@ export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSche
 
   const parsed = analyzeGitHubSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar acesso ao projeto
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', data.projectId)
@@ -439,7 +444,7 @@ export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSche
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -451,7 +456,7 @@ export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSche
   }
 
   // Obter configurações de IA
-  const { data: aiSettings } = await supabase
+  const { data: aiSettings } = await db
     .from('workspace_ai_settings')
     .select('*')
     .eq('workspace_id', project.workspace_id)
@@ -462,7 +467,7 @@ export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSche
   }
 
   // Criar registro de análise
-  const { analysis, error } = await supabase
+  const { analysis, error } = await db
     .from('github_ai_analyses')
     .insert({
       repository_id: data.repositoryId,
@@ -494,8 +499,9 @@ export async function analyzeGitHubWithAI(data: z.infer<typeof analyzeGitHubSche
  */
 export async function getGitHubAnalysisResults(analysisId: string) {
   const supabase = await createClient()
+  const db = supabase as any
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('github_ai_analyses')
     .select(`
       *,
@@ -531,6 +537,7 @@ export async function configureWorkspaceAI(data: {
   usageLimitMonthly?: number
 }) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -538,7 +545,7 @@ export async function configureWorkspaceAI(data: {
   }
 
   // Verificar permissão de admin
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', data.workspaceId)
@@ -550,7 +557,7 @@ export async function configureWorkspaceAI(data: {
   }
 
   // Verificar se já existe configuração
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('workspace_ai_settings')
     .select('id')
     .eq('workspace_id', data.workspaceId)
@@ -573,8 +580,8 @@ export async function configureWorkspaceAI(data: {
 
   let result
   if (existing) {
-    const { data: updated, error } = await supabase
-      .from('workspace_ai_settings')
+    const { data: updated, error } = await db
+    .from('workspace_ai_settings')
       .update(updateData)
       .eq('id', existing.id)
       .select()
@@ -583,8 +590,8 @@ export async function configureWorkspaceAI(data: {
     if (error) return { error: error.message }
     result = updated
   } else {
-    const { data: created, error } = await supabase
-      .from('workspace_ai_settings')
+    const { data: created, error } = await db
+    .from('workspace_ai_settings')
       .insert({
         workspace_id: data.workspaceId,
         ai_provider: data.aiProvider ?? 'openai',
@@ -615,8 +622,9 @@ export async function configureWorkspaceAI(data: {
  */
 export async function getWorkspaceAISettings(workspaceId: string) {
   const supabase = await createClient()
+  const db = supabase as any
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('workspace_ai_settings')
     .select('*')
     .eq('workspace_id', workspaceId)

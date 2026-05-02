@@ -644,6 +644,7 @@ export async function saveGeneratedContract(data: {
 }) {
   try {
     const supabase = await createClient()
+    const db = supabase as any
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Não autorizado')
 

@@ -26,10 +26,11 @@ const saveReportSchema = z.object({
 
 export async function getStatusReports(projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado', data: null }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('client_status_reports')
     .select('*')
     .eq('project_id', projectId)
@@ -41,6 +42,7 @@ export async function getStatusReports(projectId: string) {
 
 export async function generateStatusReport(input: z.infer<typeof generateReportSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado', data: null }
 
@@ -48,7 +50,7 @@ export async function generateStatusReport(input: z.infer<typeof generateReportS
   if (!parsed.success) return { error: 'Dados inválidos', data: null }
 
   // Buscar dados do projeto para contexto
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('*, clients(name)')
     .eq('id', parsed.data.projectId)
@@ -57,7 +59,7 @@ export async function generateStatusReport(input: z.infer<typeof generateReportS
   if (!project) return { error: 'Projeto não encontrado', data: null }
 
   // Buscar tasks concluídas no período
-  const { data: tasks } = await supabase
+  const { data: tasks } = await db
     .from('tasks')
     .select('title, status, assignee_id, updated_at')
     .eq('project_id', parsed.data.projectId)
@@ -66,7 +68,7 @@ export async function generateStatusReport(input: z.infer<typeof generateReportS
     .order('updated_at', { ascending: false })
 
   // Buscar aprovações no período
-  const { data: approvals } = await supabase
+  const { data: approvals } = await db
     .from('approvals')
     .select('title, status, created_at')
     .eq('project_id', parsed.data.projectId)
@@ -74,16 +76,16 @@ export async function generateStatusReport(input: z.infer<typeof generateReportS
     .lte('created_at', parsed.data.periodEnd)
 
   // Buscar horas lançadas no período
-  const { data: timeEntries } = await supabase
+  const { data: timeEntries } = await db
     .from('time_entries')
     .select('hours, description, date')
     .eq('project_id', parsed.data.projectId)
     .gte('date', parsed.data.periodStart)
     .lte('date', parsed.data.periodEnd)
 
-  const totalHours = (timeEntries ?? []).reduce((sum, t) => sum + Number(t.hours ?? 0), 0)
-  const doneTasks = (tasks ?? []).filter(t => t.status === 'done')
-  const blockedTasks = (tasks ?? []).filter(t => t.status === 'blocked' || t.status === 'backlog')
+  const totalHours = (timeEntries ?? []).reduce((sum: number, t: any) => sum + Number(t.hours ?? 0), 0)
+  const doneTasks = (tasks ?? []).filter((t: any) => t.status === 'done')
+  const blockedTasks = (tasks ?? []).filter((t: any) => t.status === 'blocked' || t.status === 'backlog')
 
   const contextData = {
     project: {
@@ -97,14 +99,14 @@ export async function generateStatusReport(input: z.infer<typeof generateReportS
     tasks: {
       total: tasks?.length ?? 0,
       done: doneTasks.length,
-      inProgress: (tasks ?? []).filter(t => t.status === 'in_progress').length,
+      inProgress: (tasks ?? []).filter((t: any) => t.status === 'in_progress').length,
       blocked: blockedTasks.length,
-      list: doneTasks.slice(0, 10).map(t => t.title),
+      list: doneTasks.slice(0, 10).map((t: any) => t.title),
     },
     approvals: {
       total: approvals?.length ?? 0,
-      approved: (approvals ?? []).filter(a => a.status === 'approved').length,
-      pending: (approvals ?? []).filter(a => a.status === 'pending').length,
+      approved: (approvals ?? []).filter((a: any) => a.status === 'approved').length,
+      pending: (approvals ?? []).filter((a: any) => a.status === 'pending').length,
     },
     hours: { total: totalHours },
   }
@@ -134,8 +136,8 @@ ${parsed.data.customInstructions ? `\nInstruções adicionais: ${parsed.data.cus
     const content = completion.choices[0].message.content ?? ''
 
     // Extrair highlights, blockers, next steps do conteúdo (simplificado)
-    const highlights = doneTasks.slice(0, 5).map(t => t.title)
-    const blockers = blockedTasks.slice(0, 3).map(t => t.title)
+    const highlights = doneTasks.slice(0, 5).map((t: any) => t.title)
+    const blockers = blockedTasks.slice(0, 3).map((t: any) => t.title)
 
     return {
       data: {
@@ -154,13 +156,14 @@ ${parsed.data.customInstructions ? `\nInstruções adicionais: ${parsed.data.cus
 
 export async function saveStatusReport(input: z.infer<typeof saveReportSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
   const parsed = saveReportSchema.safeParse(input)
   if (!parsed.success) return { error: 'Dados inválidos' }
 
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', parsed.data.projectId)
@@ -168,7 +171,7 @@ export async function saveStatusReport(input: z.infer<typeof saveReportSchema>) 
 
   if (!project) return { error: 'Projeto não encontrado' }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('client_status_reports')
     .insert({
       project_id: parsed.data.projectId,
@@ -194,6 +197,7 @@ export async function saveStatusReport(input: z.infer<typeof saveReportSchema>) 
 
 export async function markReportSent(id: string, sentTo: string[]) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
@@ -257,10 +261,11 @@ export async function markReportSent(id: string, sentTo: string[]) {
 
 export async function deleteStatusReport(id: string, projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('client_status_reports')
     .delete()
     .eq('id', id)

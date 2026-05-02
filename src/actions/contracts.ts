@@ -12,7 +12,7 @@ const contractTemplateSchema = z.object({
   templateType: z.enum(['service_agreement', 'proposal', 'sow', 'nda']),
   contentHtml: z.string(),
   contentMarkdown: z.string().optional(),
-  variablesSchema: z.record(z.any()).optional(),
+  variablesSchema: z.record(z.string(), z.any()).optional(),
   isDefault: z.boolean().optional(),
 })
 
@@ -34,7 +34,7 @@ const contractSchema = z.object({
   renewalPeriodDays: z.number().int().positive().optional(),
   paymentTerms: z.string().optional(),
   scopeSummary: z.string().optional(),
-  variablesData: z.record(z.any()).optional(),
+  variablesData: z.record(z.string(), z.any()).optional(),
 })
 
 /**
@@ -42,6 +42,7 @@ const contractSchema = z.object({
  */
 export async function createContractTemplate(data: z.infer<typeof contractTemplateSchema>) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -50,11 +51,11 @@ export async function createContractTemplate(data: z.infer<typeof contractTempla
 
   const parsed = contractTemplateSchema.safeParse(data)
   if (!parsed.success) {
-    return { error: 'Dados inválidos', details: parsed.error.errors }
+    return { error: 'Dados inválidos', details: parsed.error.issues }
   }
 
   // Verificar permissão de admin
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', data.workspaceId)
@@ -67,14 +68,14 @@ export async function createContractTemplate(data: z.infer<typeof contractTempla
 
   // Se for default, remover default dos outros templates
   if (data.isDefault) {
-    await supabase
-      .from('contract_templates')
+    await db
+    .from('contract_templates')
       .update({ is_default: false })
       .eq('workspace_id', data.workspaceId)
       .eq('template_type', data.templateType)
   }
 
-  const { data: template, error } = await supabase
+  const { data: template, error } = await db
     .from('contract_templates')
     .insert({
       workspace_id: data.workspaceId,
@@ -115,6 +116,7 @@ export async function updateContractTemplate(
   }>
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -122,7 +124,7 @@ export async function updateContractTemplate(
   }
 
   // Obter template atual
-  const { data: current } = await supabase
+  const { data: current } = await db
     .from('contract_templates')
     .select('workspace_id, template_type')
     .eq('id', templateId)
@@ -133,7 +135,7 @@ export async function updateContractTemplate(
   }
 
   // Verificar permissão
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', current.workspace_id)
@@ -146,8 +148,8 @@ export async function updateContractTemplate(
 
   // Se for default, remover default dos outros
   if (data.isDefault) {
-    await supabase
-      .from('contract_templates')
+    await db
+    .from('contract_templates')
       .update({ is_default: false })
       .eq('workspace_id', current.workspace_id)
       .eq('template_type', current.template_type)
@@ -166,7 +168,7 @@ export async function updateContractTemplate(
   if (data.isDefault !== undefined) updateData.is_default = data.isDefault
   if (data.isActive !== undefined) updateData.is_active = data.isActive
 
-  const { error } = await supabase
+  const { error } = await db
     .from('contract_templates')
     .update(updateData)
     .eq('id', templateId)
@@ -184,8 +186,9 @@ export async function updateContractTemplate(
  */
 export async function listContractTemplates(workspaceId: string, templateType?: string) {
   const supabase = await createClient()
+  const db = supabase as any
 
-  let query = supabase
+  let query = db
     .from('contract_templates')
     .select('*')
     .eq('workspace_id', workspaceId)
@@ -229,6 +232,7 @@ export async function generateContract(
   }
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -236,7 +240,7 @@ export async function generateContract(
   }
 
   // Obter template
-  const { data: template } = await supabase
+  const { data: template } = await db
     .from('contract_templates')
     .select('*')
     .eq('id', templateId)
@@ -247,7 +251,7 @@ export async function generateContract(
   }
 
   // Verificar acesso ao projeto
-  const { data: project } = await supabase
+  const { data: project } = await db
     .from('projects')
     .select('workspace_id')
     .eq('id', projectId)
@@ -257,7 +261,7 @@ export async function generateContract(
     return { error: 'Projeto não encontrado' }
   }
 
-  const { data: membership } = await supabase
+  const { data: membership } = await db
     .from('workspace_members')
     .select('role')
     .eq('workspace_id', project.workspace_id)
@@ -269,7 +273,7 @@ export async function generateContract(
   }
 
   // Inserir contrato
-  const { data: contract, error } = await supabase
+  const { data: contract, error } = await db
     .from('contracts')
     .insert({
       project_id: projectId,
@@ -307,8 +311,9 @@ export async function generateContract(
  */
 export async function listProjectContracts(projectId: string) {
   const supabase = await createClient()
+  const db = supabase as any
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('contracts')
     .select(`
       *,
@@ -342,6 +347,7 @@ export async function updateContractStatus(
   }
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -362,7 +368,7 @@ export async function updateContractStatus(
   if (additionalData?.pdfPath) updateData.pdf_path = additionalData.pdfPath
   if (additionalData?.pdfUrl) updateData.pdf_url = additionalData.pdfUrl
 
-  const { error } = await supabase
+  const { error } = await db
     .from('contracts')
     .update(updateData)
     .eq('id', contractId)
@@ -388,13 +394,14 @@ export async function addContractSigner(
   }
 ) {
   const supabase = await createClient()
+  const db = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     return { error: 'Não autenticado' }
   }
 
-  const { data: signature, error } = await supabase
+  const { data: signature, error } = await db
     .from('contract_signatures')
     .insert({
       contract_id: contractId,
@@ -412,7 +419,7 @@ export async function addContractSigner(
   }
 
   // Atualizar contrato para pending_signature se ainda for draft
-  await supabase
+  await db
     .from('contracts')
     .update({ status: 'pending_signature' })
     .eq('id', contractId)
@@ -432,9 +439,10 @@ export async function signContract(
   signatureImagePath?: string
 ) {
   const supabase = await createClient()
+  const db = supabase as any
 
   // Verificar se email corresponde
-  const { data: signature } = await supabase
+  const { data: signature } = await db
     .from('contract_signatures')
     .select('signer_email, contract_id')
     .eq('id', signatureId)
@@ -448,7 +456,7 @@ export async function signContract(
     return { error: 'Email não corresponde ao signatário' }
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('contract_signatures')
     .update({
       status: 'signed',
@@ -463,16 +471,16 @@ export async function signContract(
   }
 
   // Verificar se todas as assinaturas foram concluídas
-  const { data: allSignatures } = await supabase
+  const { data: allSignatures } = await db
     .from('contract_signatures')
     .select('status')
     .eq('contract_id', signature.contract_id)
 
-  const allSigned = allSignatures?.every(s => s.status === 'signed')
+  const allSigned = allSignatures?.every((s: any) => s.status === 'signed')
 
   if (allSigned) {
-    await supabase
-      .from('contracts')
+    await db
+    .from('contracts')
       .update({ status: 'signed', signed_at: new Date().toISOString() })
       .eq('id', signature.contract_id)
   }

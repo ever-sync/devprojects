@@ -91,7 +91,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     new Set(profitability.data.map((item) => item.clientName).filter((item): item is string => Boolean(item))),
   ).sort((a, b) => a.localeCompare(b))
   const filterTypes = Array.from(
-    new Set(stats.projectHealth.map((item) => item.type).filter(Boolean)),
+    new Set(stats.projectHealthSummaries.map((item) => item.type).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b))
   const criticalMarginProjects = profitability.data
     .filter((item) => item.marginRisk === 'critical')

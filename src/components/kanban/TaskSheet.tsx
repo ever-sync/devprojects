@@ -193,6 +193,7 @@ export function TaskSheet({
   const isCurrentTaskRunning = activeTimerTaskId === task.id
 
   async function handleStartTimer() {
+    if (!task) return
     setIsTimerLoading(true)
     const result = await startTaskTimer(projectId, task.id, `Timer iniciado pela task "${task.title}"`)
     setIsTimerLoading(false)
@@ -202,6 +203,7 @@ export function TaskSheet({
   }
 
   async function handleStopTimer() {
+    if (!task) return
     setIsTimerLoading(true)
     const result = await stopTaskTimer(projectId, task.id)
     setIsTimerLoading(false)

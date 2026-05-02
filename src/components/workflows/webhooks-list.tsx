@@ -63,7 +63,11 @@ export function WebhooksList({ workspaceId }: { workspaceId?: string }) {
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     
-    const result = await createWebhookEndpoint(formData);
+    const result = await createWebhookEndpoint({
+      ...formData,
+      headers: {},
+      is_active: true,
+    });
     if (result.success) {
       setFormData({ name: '', endpoint_url: '', workflow_id: '' });
       setShowCreateForm(false);

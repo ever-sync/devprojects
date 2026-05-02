@@ -26,6 +26,16 @@ export default async function ProjectHoursPage({ params }: Props) {
 
   const isAdmin = profile?.role === 'admin'
   if (!isAdmin) redirect(`/projects/${id}`)
+  const normalizedEntries = (entriesRes.data ?? []).map((entry: any) => {
+    const taskRef = Array.isArray(entry.task) ? entry.task[0] ?? null : entry.task
+    const userRef = Array.isArray(entry.user) ? entry.user[0] ?? null : entry.user
+    return {
+      ...entry,
+      hours: Number(entry.hours ?? 0),
+      task: taskRef,
+      user: userRef,
+    }
+  })
 
   return (
     <div>
@@ -41,7 +51,7 @@ export default async function ProjectHoursPage({ params }: Props) {
 
       <TimeEntriesPanel
         projectId={id}
-        entries={entriesRes.data ?? []}
+        entries={normalizedEntries}
         tasks={tasks ?? []}
         isAdmin={isAdmin}
       />

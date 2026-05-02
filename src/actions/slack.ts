@@ -93,7 +93,7 @@ export async function setSlackDefaultChannel(channelId: string, channelName: str
 
   const { error } = await supabase
     .from('external_integrations')
-    .update({ credentials, updated_at: new Date().toISOString() })
+    .update({ credentials: credentials as any, updated_at: new Date().toISOString() })
     .eq('id', integration.id)
 
   if (error) return { error: error.message }
