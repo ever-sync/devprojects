@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { GitIntegrationsManager } from '@/components/settings/GitIntegrationsManager'
 
+export const dynamic = 'force-dynamic'
+
 export default async function IntegrationsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
