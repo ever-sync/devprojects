@@ -17,6 +17,7 @@ const BASE_ADMIN_TABS: Tab[] = [
   { label: 'Timeline', key: 'timeline' },
   { label: 'Calendario', key: 'calendar' },
   { label: 'Documentos', key: 'documents' },
+  { label: 'Acessos', key: 'acessos' },
   { label: 'Atividade', key: 'activity' },
   { label: 'Relatorios', key: 'reports' },
 ]
@@ -35,6 +36,7 @@ const CLIENT_TABS: Tab[] = [
   { label: 'Timeline', key: 'timeline' },
   { label: 'Calendario', key: 'calendar' },
   { label: 'Documentos', key: 'documents' },
+  { label: 'Acessos', key: 'acessos' },
   { label: 'Atividade', key: 'activity' },
 ]
 
