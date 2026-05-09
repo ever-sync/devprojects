@@ -1,7 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getClientWorkspaceId } from '@/lib/workspace-access'
 import { checkWorkspaceProjectLimit } from '@/lib/workspace-limits'
@@ -185,10 +185,18 @@ export async function deleteProject(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') return { error: 'Apenas administradores podem excluir projetos' }
+
   const { error } = await supabase.from('projects').delete().eq('id', id)
   if (error) return { error: error.message }
 
   revalidatePath('/projects')
   revalidatePath('/dashboard')
-  redirect('/projects')
+  return { success: true }
 }

@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { ProjectCard } from '@/components/dashboard/ProjectCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { Loader2, Search, FolderKanban, X } from 'lucide-react'
+import { Loader2, Search, FolderKanban, X, Trash2, Settings } from 'lucide-react'
 import { fetchMoreProjects, searchProjects } from '@/actions/pagination'
+import { deleteProject } from '@/actions/projects'
 import type { Project, Client } from '@/types'
 
 type ProjectWithClient = Project & { clients?: Pick<Client, 'name'> | null }
@@ -29,12 +31,15 @@ const TYPE_FILTERS = [
 interface ProjectsGridProps {
   initialItems: ProjectWithClient[]
   totalCount: number
+  isAdmin?: boolean
 }
 
-export function ProjectsGrid({ initialItems, totalCount }: ProjectsGridProps) {
+export function ProjectsGrid({ initialItems, totalCount, isAdmin = false }: ProjectsGridProps) {
   const [items, setItems] = useState<ProjectWithClient[]>(initialItems)
+  const [totalAvailable, setTotalAvailable] = useState(totalCount)
   const [displayCount, setDisplayCount] = useState(totalCount)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [type, setType] = useState('all')
@@ -48,6 +53,7 @@ export function ProjectsGrid({ initialItems, totalCount }: ProjectsGridProps) {
     if (!hasFilters) {
       setItems(initialItems)
       setDisplayCount(totalCount)
+      setTotalAvailable(totalCount)
       setIsFiltered(false)
       return
     }
@@ -81,7 +87,27 @@ export function ProjectsGrid({ initialItems, totalCount }: ProjectsGridProps) {
     setIsLoadingMore(false)
   }
 
-  const hasMore = !isFiltered && items.length < totalCount
+  async function handleDelete(project: ProjectWithClient) {
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o projeto "${project.name}"? Esta acao nao pode ser desfeita.`,
+    )
+    if (!confirmed) return
+
+    setDeletingProjectId(project.id)
+    const result = await deleteProject(project.id)
+    if (result?.error) {
+      window.alert(`Nao foi possivel excluir o projeto: ${result.error}`)
+      setDeletingProjectId(null)
+      return
+    }
+
+    setItems((prev) => prev.filter((item) => item.id !== project.id))
+    setDisplayCount((prev) => Math.max(0, prev - 1))
+    setTotalAvailable((prev) => Math.max(0, prev - 1))
+    setDeletingProjectId(null)
+  }
+
+  const hasMore = !isFiltered && items.length < totalAvailable
 
   return (
     <div className="space-y-4">
@@ -183,11 +209,35 @@ export function ProjectsGrid({ initialItems, totalCount }: ProjectsGridProps) {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project as Parameters<typeof ProjectCard>[0]['project']}
-                showClient
-              />
+              <div key={project.id} className="space-y-2">
+                <ProjectCard
+                  project={project as Parameters<typeof ProjectCard>[0]['project']}
+                  showClient
+                />
+                {isAdmin && (
+                  <div className="flex items-center justify-end gap-2">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/projects/${project.id}/edit`}>
+                        <Settings className="w-3.5 h-3.5 mr-1" />
+                        Editar
+                      </Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(project)}
+                      disabled={deletingProjectId === project.id}
+                    >
+                      {deletingProjectId === project.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      Excluir
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
@@ -201,7 +251,7 @@ export function ProjectsGrid({ initialItems, totalCount }: ProjectsGridProps) {
             <div className="flex justify-center">
               <Button variant="outline" size="sm" onClick={handleLoadMore} disabled={isLoadingMore}>
                 {isLoadingMore && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-                Carregar mais ({totalCount - items.length} restantes)
+                Carregar mais ({totalAvailable - items.length} restantes)
               </Button>
             </div>
           )}

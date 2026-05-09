@@ -20,6 +20,9 @@ import {
   FileBadge,
   ListChecks,
   Sun,
+  BookOpen,
+  Target,
+  BarChart2,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
 import { cn } from '@/lib/utils'
@@ -70,6 +73,24 @@ const mainNavItems: NavItem[] = [
     label: 'Delegações',
     href: '/delegations',
     icon: <ListChecks className="w-4 h-4 shrink-0" />,
+    adminOnly: true,
+  },
+  {
+    label: 'OKRs',
+    href: '/okrs',
+    icon: <Target className="w-4 h-4 shrink-0" />,
+    adminOnly: true,
+  },
+  {
+    label: 'Wiki',
+    href: '/wiki',
+    icon: <BookOpen className="w-4 h-4 shrink-0" />,
+    adminOnly: true,
+  },
+  {
+    label: 'BI',
+    href: '/bi',
+    icon: <BarChart2 className="w-4 h-4 shrink-0" />,
     adminOnly: true,
   },
 ]

@@ -32,7 +32,7 @@ export async function getWikiPages() {
     .select('id, slug, title, icon, parent_id, updated_at')
     .eq('workspace_id', ctx.workspaceId)
     .order('title')
-  return { error: error?.message ?? null, pages: (data ?? []) as WikiPageMeta[] }
+  return { error: error?.message ?? null, pages: (data ?? []) as unknown as WikiPageMeta[] }
 }
 
 export async function getWikiPage(slug: string) {
@@ -46,7 +46,7 @@ export async function getWikiPage(slug: string) {
     .eq('slug', slug)
     .single()
   if (error) return { error: error.message, page: null }
-  return { error: null, page: data as WikiPage }
+  return { error: null, page: data as unknown as WikiPage }
 }
 
 export async function upsertWikiPage(input: { slug: string; title: string; content: string; icon?: string; parentId?: string | null }) {

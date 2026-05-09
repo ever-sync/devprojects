@@ -77,6 +77,7 @@ export default async function ProjectsPage() {
         <ProjectsGrid
           initialItems={allProjects as (Project & { clients?: Pick<Client, 'name'> | null })[]}
           totalCount={totalCount}
+          isAdmin={isAdmin}
         />
       )}
     </div>
