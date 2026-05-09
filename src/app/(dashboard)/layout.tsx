@@ -6,6 +6,8 @@ import { CommandPalette } from '@/components/shared/CommandPalette'
 import { OnboardingBanner } from '@/components/onboarding/OnboardingBanner'
 import type { Profile } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({
   children,
 }: {
